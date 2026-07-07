@@ -1,0 +1,84 @@
+# ============================================================
+# Solafune Precipitation Nowcasting - Git Ignore
+# ============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Package managers
+uv.lock
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Credentials and local settings
+.env
+.netrc
+.kaggle/
+**/.kaggle/
+kaggle.json
+**/kaggle.json
+.ssh/
+**/id_rsa
+**/id_ed25519
+**/*_key
+
+# Large distributed data
+data/
+external_data/
+
+# Model weights
+*.pth
+*.pt
+*.ckpt
+g_model/
+l_model/
+models/
+
+# Experiment outputs
+outputs/
+logs/
+eda/outputs/.mplconfig/
+l_experiments/*/output/
+l_experiments/*/wandb/
+g_experiments/*/output/
+g_experiments/*/wandb/
+
+# Scheduler and runtime logs
+slurm-*.out
+slurm-*.log
+extract_scores_*.log
+
+# Local caches
+.cache/
+.local/
+
+# Tool metadata that may include local machine state
+**/dataset-metadata.json
+**/kernel-metadata.json
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

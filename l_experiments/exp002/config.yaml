@@ -1,0 +1,58 @@
+experiment:
+  name: exp002
+  description: "Local dev config: normalization + weighted loss + GroupKFold + augmentation, reduced data/epoch budget for fast correctness checks"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  # Local dev budget: kept small so a correctness check finishes in minutes, not hours.
+  # Set to null for a real full-data run (that's what g_experiments/exp002/config.yaml does).
+  max_train_samples: 8000
+  max_valid_samples: 2000
+
+train:
+  batch_size: 128
+  epochs: 8
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 8
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: compact_unet  # or smp_unet (see model.py / doc/task_tickets.md ticket L-002)
+  in_channels: 54  # 3 obs * 16 bands + 3 obs masks + 3 satellite one-hot maps
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+
+loss:
+  name: weighted_mse
+  pos_weight: 4.0
+
+tta:
+  enabled: false
+  flip: true
+
+paths:
+  model_dir: ../../l_model/exp002
+  output_dir: ../../outputs/submissions/exp002
+  submission_zip: ../../outputs/submissions/exp002_submission.zip
+  norm_stats: norm_stats.json

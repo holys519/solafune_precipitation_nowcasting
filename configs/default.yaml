@@ -1,0 +1,61 @@
+# Default configuration for Solafune precipitation nowcasting.
+
+competition:
+  id: f87811b8-1964-4f4b-84b3-6fddd67ec4b1
+  name: solafune_precipitation_nowcasting
+  metric: rmse
+  external_data_allowed: false
+
+data:
+  raw_dir: data/raw
+  train_dir: data/train_dataset
+  evaluation_dir: data/evaluation_dataset
+  sample_submission_dir: data/sample_submission
+  max_observations: 3
+  history_minutes: 30
+  satellite_bands: 16
+  target_band: precipitation
+  target_filename_column: gpm_imerg_filename
+  observation_filename_column: last_30_minutes_observation_filename
+
+model:
+  architecture: Unet
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  in_channels: 48
+  classes: 1
+
+train:
+  image_size: 512
+  batch_size: 4
+  epochs: 50
+  lr: 1e-4
+  optimizer: AdamW
+  scheduler: CosineAnnealingLR
+  warmup_epochs: 3
+  early_stopping_patience: 8
+  amp: true
+  num_workers: 4
+
+loss:
+  name: mse
+
+cv:
+  n_splits: 5
+  strategy: GroupKFold
+  group_column: name_location
+  seed: 42
+
+augmentation:
+  train:
+    horizontal_flip: 0.5
+    vertical_flip: 0.5
+    rotate90: 0.5
+  tta:
+    enabled: false
+    transforms: 1
+
+paths:
+  output_dir: outputs
+  model_dir: g_model
+  submission_dir: outputs/submissions

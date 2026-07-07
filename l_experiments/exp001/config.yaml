@@ -1,0 +1,40 @@
+experiment:
+  name: exp001
+  description: "GPU baseline: 3-time 16ch satellite tensor + compact UNet"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+split:
+  valid_fraction_locations: 0.2
+  max_train_samples: 12000
+  max_valid_samples: 3000
+
+train:
+  batch_size: 128
+  epochs: 3
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 8
+  amp: true
+  grad_clip_norm: 1.0
+
+model:
+  in_channels: 54  # 3 obs * 16 bands + 3 obs masks + 3 satellite one-hot maps
+  base_channels: 48
+  clip_min: 0.0
+
+paths:
+  model_dir: ../../l_model/exp001
+  output_dir: ../../outputs/submissions/exp001
+  submission_zip: ../../outputs/submissions/exp001_submission.zip
+

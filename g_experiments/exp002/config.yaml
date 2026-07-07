@@ -1,0 +1,56 @@
+experiment:
+  name: exp002
+  description: "Full-scale exp002 on RTX 3090 x2: full train data, GroupKFold 5-fold"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null   # full data
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: compact_unet  # or smp_unet (ticket L-002 ablation)
+  in_channels: 54
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+
+loss:
+  name: weighted_mse
+  pos_weight: 4.0
+
+tta:
+  enabled: true
+  flip: true
+
+paths:
+  model_dir: ../../g_model/exp002
+  output_dir: ../../outputs/submissions/exp002
+  submission_zip: ../../outputs/submissions/exp002_submission.zip
+  norm_stats: norm_stats.json

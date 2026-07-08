@@ -1,0 +1,324 @@
++ '[' -f /etc/profile.d/modules.sh ']'
++ source /etc/profile.d/modules.sh
+++ '[' -n /bin/bash ']'
+++ shell=bash
+++ '[' -f /usr/local/Modules/init/bash ']'
+++ . /usr/local/Modules/init/bash
++++ unset _mlre _mlIFS _mlshdbg
++++ '[' 0 = 1 ']'
++++ '[' -n x ']'
++++ _mlIFS=' 	
+'
++++ IFS=' '
++++ '[' -n '' ']'
+++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash autoinit
++++ eval 'module() {
+   unset _mlre _mlIFS _mlshdbg;
+   if [ "${MODULES_SILENT_SHELL_DEBUG:-0}" = '\''1'\'' ]; then
+      case "$-" in
+         *v*x*) set +vx; _mlshdbg='\''vx'\'' ;;
+         *v*) set +v; _mlshdbg='\''v'\'' ;;
+         *x*) set +x; _mlshdbg='\''x'\'' ;;
+         *) _mlshdbg='\'''\'' ;;
+      esac;
+   fi;
+   if [ -n "${IFS+x}" ]; then
+      _mlIFS=$IFS;
+   fi;
+   IFS='\'' '\'';
+   for _mlv in ${MODULES_RUN_QUARANTINE:-}; do
+      if [ "${_mlv}" = "${_mlv##*[!A-Za-z0-9_]}" -a "${_mlv}" = "${_mlv#[0-9]}" ]; then
+         if [ -n "`eval '\''echo ${'\''$_mlv'\''+x}'\''`" ]; then
+            _mlre="${_mlre:-}${_mlv}_modquar='\''`eval '\''echo ${'\''$_mlv'\''}'\''`'\'' ";
+         fi;
+         _mlrv="MODULES_RUNENV_${_mlv}";
+         _mlre="${_mlre:-}${_mlv}='\''`eval '\''echo ${'\''$_mlrv'\'':-}'\''`'\'' ";
+      fi;
+   done;
+   if [ -n "${_mlre:-}" ]; then
+      eval `eval ${_mlre}/usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash '\''"$@"'\''`;
+   else
+      eval `/usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash "$@"`;
+   fi;
+   _mlstatus=$?;
+   if [ -n "${_mlIFS+x}" ]; then
+      IFS=$_mlIFS;
+   else
+      unset IFS;
+   fi;
+   if [ -n "${_mlshdbg:-}" ]; then
+      set -$_mlshdbg;
+   fi;
+   unset _mlre _mlv _mlrv _mlIFS _mlshdbg;
+   return $_mlstatus;
+};
+MODULES_CMD=/usr/local/Modules/libexec/modulecmd.tcl; export MODULES_CMD;
+LOADEDMODULES=; export LOADEDMODULES;
+MODULESHOME=/usr/local/Modules; export MODULESHOME;
+MODULEPATH=; export MODULEPATH;
+test 0;'
+++++ MODULES_CMD=/usr/local/Modules/libexec/modulecmd.tcl
+++++ export MODULES_CMD
+++++ LOADEDMODULES=
+++++ export LOADEDMODULES
+++++ MODULESHOME=/usr/local/Modules
+++++ export MODULESHOME
+++++ MODULEPATH=
+++++ export MODULEPATH
+++++ test 0
++++ '[' -n x ']'
++++ IFS=' 	
+'
++++ unset _mlIFS
++++ unset _mlre _mlv _mlrv
++++ '[' 0 = 1 ']'
++++ '[' -t 2 ']'
++++ export -f module
++++ export -f switchml
++++ ENV=/usr/local/Modules/init/profile.sh
++++ export ENV
++++ BASH_ENV=/usr/local/Modules/init/bash
++++ export BASH_ENV
++++ '[' 5 -ge 3 ']'
++++ [[ ehuxB =~ i ]]
++++ [[ ! :/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts: =~ :/usr/local/Modules/bin: ]]
++++ PATH=/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts
++++ export PATH
+++++ manpath
++++ manpath=/usr/local/Modules/share/man:/usr/local/man:/usr/local/share/man:/usr/share/man:/usr/man
++++ [[ ! :/usr/local/Modules/share/man:/usr/local/man:/usr/local/share/man:/usr/share/man:/usr/man: =~ :/usr/local/Modules/share/man: ]]
++++ '[' -n '' ']'
+++ export MODULE_VERSION=4.1.4
+++ MODULE_VERSION=4.1.4
+++ module use --append /apps/Modules/modulefiles/mpi
+++ unset _mlre _mlIFS _mlshdbg
+++ '[' 0 = 1 ']'
+++ '[' -n x ']'
+++ _mlIFS=' 	
+'
+++ IFS=' '
+++ '[' -n '' ']'
++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash use --append /apps/Modules/modulefiles/mpi
+++ eval 'MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1;' export 'MODULEPATH_modshare;
+MODULEPATH=/apps/Modules/modulefiles/mpi;' export 'MODULEPATH;
+test' '0;'
++++ MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1
++++ export MODULEPATH_modshare
++++ MODULEPATH=/apps/Modules/modulefiles/mpi
++++ export MODULEPATH
++++ test 0
+++ _mlstatus=0
+++ '[' -n x ']'
+++ IFS=' 	
+'
+++ '[' -n '' ']'
+++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
+++ return 0
+++ module use --append /apps/Modules/modulefiles/runtimes
+++ unset _mlre _mlIFS _mlshdbg
+++ '[' 0 = 1 ']'
+++ '[' -n x ']'
+++ _mlIFS=' 	
+'
+++ IFS=' '
+++ '[' -n '' ']'
++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash use --append /apps/Modules/modulefiles/runtimes
+++ eval 'MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1:/apps/Modules/modulefiles/runtimes:1;' export 'MODULEPATH_modshare;
+MODULEPATH=/apps/Modules/modulefiles/mpi:/apps/Modules/modulefiles/runtimes;' export 'MODULEPATH;
+test' '0;'
++++ MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1:/apps/Modules/modulefiles/runtimes:1
++++ export MODULEPATH_modshare
++++ MODULEPATH=/apps/Modules/modulefiles/mpi:/apps/Modules/modulefiles/runtimes
++++ export MODULEPATH
++++ test 0
+++ _mlstatus=0
+++ '[' -n x ']'
+++ IFS=' 	
+'
+++ '[' -n '' ']'
+++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
+++ return 0
++ '[' -n /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp002 ']'
++ '[' -f /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp002/run.sh ']'
++ SCRIPT_DIR=/group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp002
+++ cd /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp002/../..
+++ pwd
++ PROJECT_DIR=/group/project143/yamamoto/solafune_precipitation_nowcasting
++ CONFIG=config.yaml
++ FOLD=0
++ CONTAINER_FOLDER=/group/project143/common/containers
++ CONTAINER_NAME=kaggle-gpu-images-python-v163.sif
++ CONTAINER_PATH=/group/project143/common/containers/kaggle-gpu-images-python-v163.sif
++ '[' '!' -r /group/project143/common/containers/kaggle-gpu-images-python-v163.sif ']'
++ module load singularity/3.5.3
++ unset _mlre _mlIFS _mlshdbg
++ '[' 0 = 1 ']'
++ '[' -n x ']'
++ _mlIFS=' 	
+'
++ IFS=' '
++ '[' -n '' ']'
+++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash load singularity/3.5.3
++ eval 'LD_LIBRARY_PATH=/apps/singularity/3.5.3/lib;' export 'LD_LIBRARY_PATH;
+CPATH=/apps/singularity/3.5.3/include;' export 'CPATH;
+LIBRARY_PATH=/apps/singularity/3.5.3/lib;' export 'LIBRARY_PATH;
+MANPATH=/apps/singularity/3.5.3/share/man;' export 'MANPATH;
+_LMFILES_=/apps/Modules/modulefiles/runtimes/singularity/3.5.3;' export '_LMFILES_;
+LOADEDMODULES=singularity/3.5.3;' export 'LOADEDMODULES;
+LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1;' export 'LIBRARY_PATH_modshare;
+MANPATH_modshare=/apps/singularity/3.5.3/share/man:1;' export 'MANPATH_modshare;
+LD_LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1;' export 'LD_LIBRARY_PATH_modshare;
+CPATH_modshare=/apps/singularity/3.5.3/include:1;' export 'CPATH_modshare;
+_LMFILES__modshare=/apps/Modules/modulefiles/runtimes/singularity/3.5.3:1;' export '_LMFILES__modshare;
+LOADEDMODULES_modshare=singularity/3.5.3:1;' export 'LOADEDMODULES_modshare;
+PATH=/apps/singularity/3.5.3/bin:/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts;' export 'PATH;
+SINGULARITY_ROOT=/apps/singularity/3.5.3;' export 'SINGULARITY_ROOT;
+PATH_modshare=/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts:1:/usr/bin:1:/apps/singularity/3.5.3/bin:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:1:/usr/local/bin:1:/home/ba110396/.local/bin:1:/bin:1:/snap/bin:1:/usr/local/Modules/bin:1:/sbin:1:/usr/sbin:1:/usr/games:1:/usr/local/sbin:1:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:1:/usr/local/games:1;' export 'PATH_modshare;
+test' '0;'
+++ LD_LIBRARY_PATH=/apps/singularity/3.5.3/lib
+++ export LD_LIBRARY_PATH
+++ CPATH=/apps/singularity/3.5.3/include
+++ export CPATH
+++ LIBRARY_PATH=/apps/singularity/3.5.3/lib
+++ export LIBRARY_PATH
+++ MANPATH=/apps/singularity/3.5.3/share/man
+++ export MANPATH
+++ _LMFILES_=/apps/Modules/modulefiles/runtimes/singularity/3.5.3
+++ export _LMFILES_
+++ LOADEDMODULES=singularity/3.5.3
+++ export LOADEDMODULES
+++ LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1
+++ export LIBRARY_PATH_modshare
+++ MANPATH_modshare=/apps/singularity/3.5.3/share/man:1
+++ export MANPATH_modshare
+++ LD_LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1
+++ export LD_LIBRARY_PATH_modshare
+++ CPATH_modshare=/apps/singularity/3.5.3/include:1
+++ export CPATH_modshare
+++ _LMFILES__modshare=/apps/Modules/modulefiles/runtimes/singularity/3.5.3:1
+++ export _LMFILES__modshare
+++ LOADEDMODULES_modshare=singularity/3.5.3:1
+++ export LOADEDMODULES_modshare
+++ PATH=/apps/singularity/3.5.3/bin:/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts
+++ export PATH
+++ SINGULARITY_ROOT=/apps/singularity/3.5.3
+++ export SINGULARITY_ROOT
+++ PATH_modshare=/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts:1:/usr/bin:1:/apps/singularity/3.5.3/bin:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:1:/usr/local/bin:1:/home/ba110396/.local/bin:1:/bin:1:/snap/bin:1:/usr/local/Modules/bin:1:/sbin:1:/usr/sbin:1:/usr/games:1:/usr/local/sbin:1:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:1:/usr/local/games:1
+++ export PATH_modshare
+++ test 0
++ _mlstatus=0
++ '[' -n x ']'
++ IFS=' 	
+'
++ '[' -n '' ']'
++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
++ return 0
++ echo ==========================================
++ echo g_experiments/exp002
++ echo ==========================================
++ echo 'Container: /group/project143/common/containers/kaggle-gpu-images-python-v163.sif'
++ echo 'Project:   /group/project143/yamamoto/solafune_precipitation_nowcasting'
++ echo 'Config:    config.yaml'
++ echo 'Fold:      0'
++ SINGULARITY_ARGS=(--nv --home "$PROJECT_DIR" --bind "$PROJECT_DIR:$PROJECT_DIR" --env PYTHON=python3)
++ '[' -n 3919443 ']'
++ '[' -d /local/job/3919443 ']'
++ SINGULARITY_ARGS+=(--bind "/local/job/${SLURM_JOB_ID}:/local/job/${SLURM_JOB_ID}")
++ singularity exec --nv --home /group/project143/yamamoto/solafune_precipitation_nowcasting --bind /group/project143/yamamoto/solafune_precipitation_nowcasting:/group/project143/yamamoto/solafune_precipitation_nowcasting --env PYTHON=python3 --bind /local/job/3919443:/local/job/3919443 /group/project143/common/containers/kaggle-gpu-images-python-v163.sif bash /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp002/run.sh config.yaml 0
+Error for command "exec": unknown flag: --env
+
+Options for exec command:
+
+      --add-caps string        a comma separated capability list to add
+      --allow-setuid           allow setuid binaries in container (root only)
+      --app string             set an application to run inside a container
+      --apply-cgroups string   apply cgroups from file for container
+                               processes (root only)
+  -B, --bind strings           a user-bind path specification.  spec has
+                               the format src[:dest[:opts]], where src and
+                               dest are outside and inside paths.  If dest
+                               is not given, it is set equal to src. 
+                               Mount options ('opts') may be specified as
+                               'ro' (read-only) or 'rw' (read/write, which
+                               is the default). Multiple bind paths can be
+                               given by a comma separated list.
+  -e, --cleanenv               clean environment before running container
+  -c, --contain                use minimal /dev and empty other
+                               directories (e.g. /tmp and $HOME) instead
+                               of sharing filesystems from your host
+  -C, --containall             contain not only file systems, but also
+                               PID, IPC, and environment
+      --disable-cache          dont use cache, and dont create cache
+      --dns string             list of DNS server separated by commas to
+                               add in resolv.conf
+      --docker-login           login to a Docker Repository interactively
+      --drop-caps string       a comma separated capability list to drop
+  -f, --fakeroot               run container in new user namespace as uid 0
+  -h, --help                   help for exec
+  -H, --home string            a home directory specification.  spec can
+                               either be a src path or src:dest pair.  src
+                               is the source path of the home directory
+                               outside the container and dest overrides
+                               the home directory within the container.
+                               (default "/home/ba110396")
+      --hostname string        set container hostname
+  -i, --ipc                    run container in a new IPC namespace
+      --keep-privs             let root user keep privileges in container
+                               (root only)
+  -n, --net                    run container in a new network namespace
+                               (sets up a bridge network interface by default)
+      --network string         specify desired network type separated by
+                               commas, each network will bring up a
+                               dedicated interface inside container
+                               (default "bridge")
+      --network-args strings   specify network arguments to pass to CNI plugins
+      --no-home                do NOT mount users home directory if home
+                               is not the current working directory
+      --no-init                do NOT start shim process with --pid
+      --no-nv                  
+      --no-privs               drop all privileges from root user in container)
+      --nohttps                do NOT use HTTPS with the docker://
+                               transport (useful for local docker
+                               registries without a certificate)
+      --nonet                  disable VM network handling
+      --nv                     enable experimental Nvidia support
+  -o, --overlay strings        use an overlayFS image for persistent data
+                               storage or as read-only layer of container
+      --passphrase             prompt for an encryption passphrase
+      --pem-path string        enter an path to a PEM formated RSA key for
+                               an encrypted container
+  -p, --pid                    run container in a new PID namespace
+      --pwd string             initial working directory for payload
+                               process inside the container
+      --rocm                   enable experimental Rocm support
+  -S, --scratch strings        include a scratch directory within the
+                               container that is linked to a temporary dir
+                               (use -W to force location)
+      --security strings       enable security features (SELinux,
+                               Apparmor, Seccomp)
+  -u, --userns                 run container in a new user namespace,
+                               allowing Singularity to run completely
+                               unprivileged on recent kernels. This
+                               disables some features of Singularity, for
+                               example it only works with sandbox images.
+      --uts                    run container in a new UTS namespace
+      --vm                     enable VM support
+      --vm-cpu string          number of CPU cores to allocate to Virtual
+                               Machine (implies --vm) (default "1")
+      --vm-err                 enable attaching stderr from VM
+      --vm-ip string           IP Address to assign for container usage.
+                               Defaults to DHCP within bridge network.
+                               (default "dhcp")
+      --vm-ram string          amount of RAM in MiB to allocate to Virtual
+                               Machine (implies --vm) (default "1024")
+  -W, --workdir string         working directory to be used for /tmp,
+                               /var/tmp and $HOME (if -c/--contain was
+                               also used)
+  -w, --writable               by default all Singularity containers are
+                               available as read only. This option makes
+                               the file system accessible as read/write.
+      --writable-tmpfs         makes the file system accessible as
+                               read-write with non persistent data (with
+                               overlay support only)
+
+Run 'singularity exec --help' for more detailed usage information.

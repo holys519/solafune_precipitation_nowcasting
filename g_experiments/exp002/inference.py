@@ -23,6 +23,7 @@ import yaml
 from torch import nn
 from torch.utils.data import DataLoader
 
+from amp_utils import cuda_autocast
 from dataset import PrecipDataset, load_norm_stats, read_rows
 from model import build_model
 from tiff_utils import write_float32_like_template
@@ -81,7 +82,7 @@ def predict_ensemble(
     count = 0
     for model in models:
         for view, flip_dims in views:
-            with torch.amp.autocast("cuda", enabled=amp):
+            with cuda_autocast(enabled=amp):
                 pred = model(view)
             if flip_dims is not None:
                 pred = torch.flip(pred, dims=flip_dims)

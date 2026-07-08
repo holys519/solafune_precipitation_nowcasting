@@ -7,12 +7,13 @@ Differences from exp001's dataset.py (see doc/exp001_retrospective.md for why):
   every satellite is always being downsized onto the coarser 41x41 IMERG grid.
 - synchronized flip/rot90 augmentation for the train split (input and target are both simple
   square rasters with no fixed "up", so this is safe).
-- GroupKFold (sklearn, shuffled) over name_location instead of a single fixed random holdout.
+- GroupKFold-like split over name_location instead of a single fixed random holdout.
 """
 
 from __future__ import annotations
 
 import ast
+from collections import Counter
 import csv
 import json
 import random
@@ -58,15 +59,29 @@ def make_group_kfold_split(
     fold: int,
     seed: int,
 ) -> tuple[list[dict[str, str]], list[dict[str, str]], list[str]]:
-    from sklearn.model_selection import GroupKFold
+    if not 0 <= fold < n_splits:
+        raise ValueError(f"fold must be in [0, {n_splits}), got {fold}")
 
-    groups = [row["name_location"] for row in rows]
-    gkf = GroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-    splits = list(gkf.split(X=range(len(rows)), groups=groups))
-    train_idx, valid_idx = splits[fold]
-    train_rows = [rows[i] for i in train_idx]
-    valid_rows = [rows[i] for i in valid_idx]
-    valid_locations = sorted({rows[i]["name_location"] for i in valid_idx})
+    group_counts = Counter(row["name_location"] for row in rows)
+    if len(group_counts) < n_splits:
+        raise ValueError(f"n_splits={n_splits} exceeds number of groups={len(group_counts)}")
+
+    rng = random.Random(seed)
+    locations = sorted(group_counts)
+    rng.shuffle(locations)
+    locations.sort(key=lambda loc: group_counts[loc], reverse=True)
+
+    fold_counts = [0] * n_splits
+    fold_locations: list[list[str]] = [[] for _ in range(n_splits)]
+    for location in locations:
+        target_fold = min(range(n_splits), key=lambda idx: (fold_counts[idx], idx))
+        fold_locations[target_fold].append(location)
+        fold_counts[target_fold] += group_counts[location]
+
+    valid_location_set = set(fold_locations[fold])
+    train_rows = [row for row in rows if row["name_location"] not in valid_location_set]
+    valid_rows = [row for row in rows if row["name_location"] in valid_location_set]
+    valid_locations = sorted(valid_location_set)
     return train_rows, valid_rows, valid_locations
 
 

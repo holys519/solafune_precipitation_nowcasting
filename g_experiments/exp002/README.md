@@ -23,25 +23,29 @@ bash run.sh config.yaml all          # fold 0-4 連続実行(G-002)
 bash run.sh config_a100x2.yaml 3     # A100x2, fold 3
 ```
 
-Slurmクラスタ(要 `CONTAINER` パス編集):
+Slurmクラスタ:
 
 ```bash
 sbatch singularity_run.sh config.yaml 0
-sbatch --gpus-per-node=4 --cpus-per-task=32 singularity_run.sh config_a100x4.yaml all
+sbatch singularity_run.sh all
+sbatch singularity_run.sh submit
+sbatch singularity_run.sh all_submit
+sbatch --ntasks=4 --ntasks-per-node=4 --gpus-per-node=4 --cpus-per-task=32 singularity_run.sh config_a100x4.yaml all
 ```
 
-5-fold終了後、アンサンブル推論と提出zip作成:
+`CONTAINER_FOLDER` と `CONTAINER_NAME` は環境変数で上書きできます。デフォルトは
+`/group/project143/common/containers/kaggle-gpu-images-python-v163.sif` です。
+GPUメモリは `logs/gpu_memory_${SLURM_JOB_ID}_*.csv` に300秒間隔で記録します。
+間隔を変える場合は `GPU_LOG_INTERVAL_SECONDS=600 sbatch ...` のように指定します。
+
+5-fold終了後、または既存checkpointから推論と提出zip作成:
 
 ```bash
-PY=../../.venv/bin/python
-$PY inference.py --config config.yaml \
-  --checkpoint ../../g_model/exp002/best_model_fold0.pt \
-  --checkpoint ../../g_model/exp002/best_model_fold1.pt \
-  --checkpoint ../../g_model/exp002/best_model_fold2.pt \
-  --checkpoint ../../g_model/exp002/best_model_fold3.pt \
-  --checkpoint ../../g_model/exp002/best_model_fold4.pt
-$PY make_submission.py
+sbatch singularity_run.sh submit
 ```
+
+`submit` は `../../g_model/exp002/best_model_fold*.pt` をすべて使ってensembleします。
+fold0しか無い場合は単fold提出zipを作成します。
 
 `norm_stats.json` はコミット済み(l_experiments/exp002で生成したものと同一)。再生成する場合は
 `run.sh` が自動で `normalize_stats.py` を実行します(ファイルが無い場合のみ)。

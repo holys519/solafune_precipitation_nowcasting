@@ -1,0 +1,87 @@
+# Ticket G-004 (doc/task_tickets.md): A100 x4 profile.
+# NOTE: train.py currently uses nn.DataParallel, which scales sub-linearly past 2 GPUs
+# (single-process gather/scatter bottleneck). This config is usable as-is but the
+# DDP/torchrun migration in ticket G-004 should land before treating 4-GPU throughput
+# numbers as meaningful. Drafted without A100 hardware available for validation.
+
+experiment:
+  name: exp007
+  description: "Exp007 on A100 x4: equal-weight ensemble and post-processing"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.002
+  weight_decay: 0.0001
+  num_workers: 32
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: compact_unet
+  in_channels: 54
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+
+loss:
+  name: weighted_mse
+  pos_weight: 2.0
+
+tta:
+  enabled: true
+  flip: true
+
+postprocess:
+  use_oof_calibration: false
+  calibration_path: ../../outputs/analysis/exp007/oof_calibration.json
+
+ensemble:
+  normalize_source_weights: true
+  sources:
+    - name: exp003
+      model_dir: ../../g_model/exp003
+      weight: 1.0
+      enabled: true
+    - name: exp004
+      model_dir: ../../g_model/exp004
+      weight: 1.0
+      enabled: true
+    - name: exp005
+      model_dir: ../../g_model/exp005
+      weight: 1.0
+      enabled: true
+    - name: exp006
+      model_dir: ../../g_model/exp006
+      weight: 1.0
+      enabled: true
+
+paths:
+  model_dir: ../../g_model/exp007
+  output_dir: ../../outputs/submissions/exp007
+  submission_zip: ../../outputs/submissions/exp007_submission.zip
+  analysis_dir: ../../outputs/analysis/exp007
+  norm_stats: norm_stats.json

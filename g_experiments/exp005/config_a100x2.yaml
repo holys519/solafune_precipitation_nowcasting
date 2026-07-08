@@ -1,0 +1,66 @@
+# Ticket G-003 (doc/task_tickets.md): A100 x2 profile.
+# Larger VRAM allows a bigger batch; LR scaled up with sqrt of the batch ratio.
+# Drafted without A100 hardware available for validation -- confirm batch fits and
+# throughput scales on the first real run, adjust batch_size/num_workers to the node.
+
+experiment:
+  name: exp005
+  description: "Exp005 on A100 x2: lightweight temporal fusion U-Net"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+train:
+  batch_size: 256
+  epochs: 20
+  lr: 0.0014
+  weight_decay: 0.0001
+  num_workers: 16
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: temporal_fusion_unet
+  in_channels: 54
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+
+loss:
+  name: weighted_mse
+  pos_weight: 2.0
+
+tta:
+  enabled: true
+  flip: true
+
+postprocess:
+  use_oof_calibration: false
+  calibration_path: ../../outputs/analysis/exp005/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp005
+  output_dir: ../../outputs/submissions/exp005
+  submission_zip: ../../outputs/submissions/exp005_submission.zip
+  analysis_dir: ../../outputs/analysis/exp005
+  norm_stats: norm_stats.json

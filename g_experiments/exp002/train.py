@@ -16,6 +16,7 @@ import yaml
 from torch import nn
 from torch.utils.data import DataLoader
 
+from amp_utils import cuda_autocast, make_grad_scaler
 from dataset import PrecipDataset, load_norm_stats, make_group_kfold_split, read_rows, sample_rows
 from losses import WeightedMSELoss
 from model import build_model
@@ -175,7 +176,7 @@ def main() -> None:
         lr=float(config["train"]["lr"]),
         weight_decay=float(config["train"]["weight_decay"]),
     )
-    scaler = torch.amp.GradScaler("cuda", enabled=bool(config["train"]["amp"]))
+    scaler = make_grad_scaler(enabled=bool(config["train"]["amp"]))
     loss_fn = WeightedMSELoss(pos_weight=float(config["loss"]["pos_weight"]))
     epochs = int(config["train"]["epochs"])
     clip_min = float(config["model"]["clip_min"])
@@ -201,7 +202,7 @@ def main() -> None:
             x = batch["x"].to(device, non_blocking=True)
             y = batch["y"].to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            with torch.amp.autocast("cuda", enabled=bool(config["train"]["amp"])):
+            with cuda_autocast(enabled=bool(config["train"]["amp"])):
                 pred = model(x)
                 loss = loss_fn(pred, y)
             scaler.scale(loss).backward()

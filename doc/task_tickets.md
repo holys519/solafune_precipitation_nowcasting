@@ -1,9 +1,10 @@
 # Task Tickets
 
-Last updated: 2026-07-07
+Last updated: 2026-07-08
 
 Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). See
-`doc/exp001_retrospective.md` for the analysis behind these tickets.
+`doc/exp001_retrospective.md` for the analysis behind the exp002 tickets, and
+`doc/research_survey.md` for the research-driven roadmap after exp003.
 
 ## Track convention
 
@@ -25,9 +26,12 @@ Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). 
 | G-004 | g_experiments | exp002 | A100x4 scaled config + DDP migration | P1 | Config drafted; DDP migration not implemented (see notes) |
 | L-002 | l_experiments | exp002 | Architecture ablation: CompactUNet vs `smp_unet` (pretrained efficientnet-b0) on a fixed fold | P1 | Not started |
 | G-005 | g_experiments | exp003 | Promote winning exp002 architecture, full 5-fold + ensemble | P1 | Blocked on L-002 |
-| L-003 | l_experiments | exp004 | Per-observation-time encoder before fusion (currently: naive channel concat of 3 times) | P2 | Not started |
-| L-004 | l_experiments | exp005 | Post-processing sweep: clip thresholds, calibration, blending fold predictions vs simple average | P2 | Not started |
+| G-008 | g_experiments | exp005 | Per-observation-time encoder before fusion (currently: naive channel concat of 3 times) | P2 | Minimal implementation added |
+| G-009 | g_experiments | exp007 | Post-processing sweep: clip thresholds, calibration, blending fold predictions vs simple average | P2 | Minimal ensemble implementation added |
 | G-006 | g_experiments | — | Harmonize checkpoint schema so `extract_scores.py` also scans `.pt` files under `l_model`/`g_model` and reads `best_rmse` in addition to `best_score`/`.pth` | P2 | Done (this session, backward compatible) |
+| G-010 | g_experiments | exp004 | Two-head rain/no-rain detection + rain amount regression with OOF threshold sweep | P1 | Minimal implementation added |
+| G-011 | g_experiments | exp006 | Satellite-specific input stems/adapters for Himawari, GOES, and Meteosat | P2 | Minimal implementation added |
+| G-007 | g_experiments | exp007 | OOF-weighted ensemble and post-processing sweep across exp003+ checkpoints | P1 | Minimal implementation added |
 
 ## Ticket Details
 
@@ -80,7 +84,7 @@ right now. The ablation itself (train both on the same fold, same data budget, c
 not run yet — do it locally on a single fold before committing a production 5-fold run to whichever
 architecture wins, since a pretrained encoder roughly doubles+ parameter count and per-epoch cost.
 
-### L-003 — temporal encoder (exp004)
+### G-008 — temporal encoder (exp005)
 
 Currently the 3 observation times are just concatenated as extra channels with no explicit temporal
 inductive bias (order is implicit in channel position). Worth trying a shared per-time-step
@@ -88,11 +92,32 @@ encoder (weight-shared across the 3 slots) whose outputs are fused (concat or sm
 the U-Net decoder, so the model isn't forced to learn 3 separate representations for the same
 sensor at slightly different times from scratch.
 
-### L-004 — post-processing (exp005)
+### G-009 — post-processing (exp007)
 
 Non-negative clipping is already done. Still open: calibration curve (is predicted vs actual biased
 at high rain rates?), and whether averaging multiple fold predictions beats picking a single best
 fold.
+
+### G-010 — two-head rain detection + amount regression (exp004)
+
+Research survey priority 1. Split the task into a rain/no-rain head and a precipitation amount head
+to address the large zero-rain imbalance. Add OOF threshold sweep for the rain probability threshold
+and log detection metrics (precision, recall, CSI, false alarm ratio) in addition to RMSE.
+
+Acceptance: `exp004` can produce a full submission zip, plus OOF CSVs that show whether gains/losses
+come from false-positive rain reduction, missed light rain, or amount regression.
+
+### G-011 — satellite-specific adapters (exp006)
+
+Research survey priority 3. Add small satellite-specific input stems for Himawari, GOES, and
+Meteosat before the shared backbone. Evaluate per-satellite OOF RMSE to confirm the adapter improves
+domain handling rather than overfitting one sensor.
+
+### G-007 — OOF ensemble and post-processing sweep (exp007)
+
+Research survey priority 4. Use OOF predictions from exp003+ to tune model weights, per-satellite
+scale/bias, rain-probability thresholds, non-negative clipping, and optional upper clipping. Avoid
+any leaderboard-driven tuning.
 
 ### G-006 — checkpoint/extract_scores harmonization (done)
 

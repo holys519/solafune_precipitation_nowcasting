@@ -32,6 +32,10 @@ Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). 
 | G-010 | g_experiments | exp004 | Two-head rain/no-rain detection + rain amount regression with OOF threshold sweep | P1 | Minimal implementation added |
 | G-011 | g_experiments | exp006 | Satellite-specific input stems/adapters for Himawari, GOES, and Meteosat | P2 | Minimal implementation added |
 | G-007 | g_experiments | exp007 | OOF-weighted ensemble and post-processing sweep across exp003+ checkpoints | P1 | Minimal implementation added |
+| G-012 | g_experiments | exp008 | Official tile-RMSE diagnostics and value-threshold drizzle post-processing on exp004 checkpoints | P0 | Implemented |
+| G-013 | g_experiments | exp009 | Successor-row satellite frames (`T/T+10/T+20`) as additional inputs | P0 | Implemented |
+| G-014 | g_experiments | exp010 | Dataset cleanup: suspicious labels, IR zero nodata, GOES 4ch native remap | P1 | Implemented |
+| G-015 | g_experiments | exp011 | Combine satellite-specific adapter with two-head rain model | P1 | Implemented |
 
 ## Ticket Details
 
@@ -126,3 +130,27 @@ any leaderboard-driven tuning.
 `extract_scores.py` to scan both `.pth` and `.pt`, and read `best_score` or `best_rmse` (lower is
 better for RMSE, so scores are sorted/reported as-is — no inversion needed, just noted the metric
 name is RMSE not an accuracy-style "score").
+
+### G-012 — official metric and drizzle post-processing (exp008)
+
+Uses `exp004` checkpoints by default through `paths.source_model_dir`, then writes separate exp008
+analysis/submission outputs. Adds `tile_rmse` as the primary selection metric and writes
+`oof_value_threshold_sweep.csv` for `pred < threshold -> 0` post-processing. Temporal smoothing is
+implemented but disabled by default in config.
+
+### G-013 — successor-row frames (exp009)
+
+Extends the input from 3 observation slots to 6 slots: current row plus the same-location successor
+row when it exists. This makes `model.in_channels=105`. Missing successor rows are zero-filled with
+mask channels set to 0.
+
+### G-014 — dataset cleanup (exp010)
+
+Drops the five suspicious first-frame train targets identified in discussion, treats raw zeros in IR
+bands as nodata by setting normalized values to 0, and remaps GOES `282x282x4` native files into
+`C01/C02/C03/C05` slots.
+
+### G-015 — satellite-adapter two-head model (exp011)
+
+Adds `satellite_adapter_two_head_unet`: satellite-specific input stems selected from the one-hot
+satellite maps, shared U-Net body, and two heads for rain probability and amount.

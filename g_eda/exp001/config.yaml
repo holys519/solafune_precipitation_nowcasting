@@ -1,0 +1,45 @@
+experiment:
+  name: g_eda_exp001
+  description: "Image-processing EDA for precipitation nowcasting"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  target_height: 41
+  target_width: 41
+
+sampling:
+  max_train_rows: 6000
+  max_eval_rows: 6000
+  max_rows_per_location: 450
+  min_target_mean_for_shift: 0.2
+  random_seed: 42
+
+bands:
+  # 0-indexed approximate IR window / cloud-top-sensitive bands used for image-processing probes.
+  ir_window:
+    goes: 13
+    himawari: 13
+    meteosat: 13
+  cold_cloud_percentile: 12.0
+
+analyses:
+  target_morphology: true
+  parallax_shift: true
+  temporal_motion: true
+  spectral_texture: true
+  train_eval_shift: true
+
+thresholds:
+  rain_mm: [0.1, 1.0, 5.0]
+  cold_cloud_percentiles: [5.0, 10.0, 15.0, 20.0]
+
+runtime:
+  num_workers: 1
+  save_examples_per_location: 2
+
+paths:
+  output_dir: ../../outputs/g_eda/exp001

@@ -45,13 +45,22 @@ cd l_experiments/exp001
 ../../.venv/bin/python make_submission.py
 ```
 
-EDA scripts run from repo root and depend only on stdlib/NumPy/Matplotlib (no rasterio/pandas
+`eda/` scripts run from repo root and depend only on stdlib/NumPy/Matplotlib (no rasterio/pandas
 requirement, to keep them runnable in constrained sandboxes):
 
 ```bash
 python3 eda/01_data_overview.py
 python3 eda/02_deep_dive.py
 python3 eda/03_satellite_anomalies.py
+```
+
+Heavier, modeling-relevant EDA (OpenCV-based morphology/parallax/motion/texture analysis) lives in
+`l_eda/expNNN` (local) and `g_eda/expNNN` (HPC), mirroring the `l_experiments`/`g_experiments` split
+below:
+
+```bash
+cd l_eda/exp001 && bash run.sh                 # or: uv run python l_eda/exp001/run_image_eda.py --config config.yaml
+cd g_eda/exp001 && sbatch singularity_run.sh    # HPC
 ```
 
 There is no lint/test suite configured; validate changes by running the relevant experiment or EDA
@@ -68,8 +77,24 @@ script directly.
   here under the **same experiment number**.
 - Each experiment is self-contained: `config.yaml` holds every setting needed to reproduce it
   (paths, model, split, training hyperparameters). Don't hardcode values that belong in config.
-- Trained weights go to `l_model/` / `g_model/` (git-ignored), never into the submission zip.
+- Standard file set per experiment (see `g_experiments/README.md`): `config.yaml`, `dataset.py`,
+  `model.py`, `losses.py`, `train.py`, `inference.py`, `make_submission.py`, plus
+  `singularity_run.sh` + `python_run.sh` (HPC entrypoints) and `README.md` describing the method.
+  Not every experiment needs every file — mirror whichever ones the idea actually touches.
+- `g_experiments/expNNN/singularity_run.sh` is an `sbatch` script: it resolves the container at
+  `$CONTAINER_FOLDER/$CONTAINER_NAME` (env-overridable, default
+  `/group/project143/common/containers/kaggle-gpu-images-python-v163.sif`), binds the project root
+  into the container, and runs `python_run.sh <stage>` inside `singularity exec --nv`. Submit with
+  `sbatch singularity_run.sh [train|inference|...]`.
+- Trained weights go to `l_model/` / `g_model/` (git-ignored, named
+  `{exp_name}_{model_name}_fold{fold}_best.pth` per `g_model/README.md`), never into the submission
+  zip.
 - `experiments/` is legacy; do not add new work there.
+- Work is tracked as `L-XXX` (runs under `l_experiments/`, fast local iteration) / `G-XXX` (runs
+  under `g_experiments/`, full-scale or scaled-hardware) tickets in `doc/task_tickets.md`. GPU
+  scaling work (A100x2/x4) is always G-track. `g_experiments/EXPERIMENT_PLAN.md` and
+  `doc/task_tickets.md` track per-experiment status more actively than `EXPERIMENT_REPORT.md` —
+  check their "Last updated" dates and prefer whichever is newer when they disagree.
 
 ### Data access pattern
 
@@ -119,6 +144,7 @@ segmentation-models-pytorch Unet from the default config).
 
 ### extract_scores.py
 
-Standalone utility (run via `run_extract_scores.sh` on the HPC cluster) that scans `g_model*/*.pth`
-checkpoints for a `best_score` field and prints a per-experiment/fold summary. Update the checkpoint
-key name here if training code changes what it stores under `best_score`.
+Standalone utility (run via `run_extract_scores.sh` on the HPC cluster) that scans `g_model*/` and
+`l_model/` for `*.pth` and `*.pt` checkpoints, reads `best_score` (falling back to `best_rmse`), and
+prints a per-experiment/fold summary. Update this if training code changes what key the best-metric
+value is stored under.

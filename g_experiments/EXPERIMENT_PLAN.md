@@ -36,6 +36,7 @@
 | exp009 | Successor-row inputs | Add successor row frames as extra satellite observations (`105ch`) | Implemented |
 | exp010 | Data cleanup | Suspicious-label drop, IR-zero nodata handling, GOES 4ch remap | Implemented |
 | exp011 | Adapter two-head | Combine satellite-specific input stems with two-head rain model | Implemented |
+| exp012 | Successor-rows × adapter two-head | Combine exp009 successor-row frames (105ch) with exp011 satellite-adapter two-head (ticket G-016) | Implemented — smoke-tested on 3090; full 5-fold run pending |
 
 See `doc/task_tickets.md` for the full ticket list, including which items are `g_experiments`-only
 (A100x2/x4 scaled configs, DDP migration — these are hardware-scaling concerns and are never

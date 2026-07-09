@@ -225,8 +225,8 @@ Source: `outputs/l_eda/exp001/EDA_IMAGE_REPORT.md` (+ its CSVs) and
 | ID | Track | Exp | Title | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | G-016 | g_experiments | exp012 | Combine successor-row frames (exp009) with satellite-adapter two-head (exp011) | P0 | Implemented (`g_experiments/exp012`, smoke-tested on 3090; full 5-fold run pending) |
-| G-017 | g_experiments | exp013 | Per-(location, satellite) parallax registration before frame stacking | P1 | Not started |
-| G-018 | g_experiments | exp013 | Extend context beyond 1 successor row (predecessor + successor, or wider window) | P1 | Not started |
+| G-017 | g_experiments | exp013 | Per-(location, satellite) parallax registration before frame stacking | P1 | Implemented (`g_experiments/exp013`, `config_registration_only.yaml` isolates it; single-fold A/B pending) |
+| G-018 | g_experiments | exp013 | Extend context beyond 1 successor row (predecessor + successor, or wider window) | P1 | Implemented (`data.context_offsets: [-1, 0, 1]`, `config_context_only.yaml` isolates it) |
 | G-019 | g_experiments | exp007 | Refresh OOF-weighted ensemble over exp008/009/011 (+ exp010 pending G-020) | P0 | Not started |
 | G-020 | g_experiments | exp010 | Ablate the 3 cleanup changes individually to find the one hurting public score | P1 | Not started |
 | G-021 | g_experiments | exp009/011 | Dice/Focal loss on the rain-probability head to push CSI past ~0.46 | P2 | Not started |

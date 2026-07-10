@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create fold logs and OOF diagnostics for exp015 (reuses exp009 checkpoints)."""
+"""Create fold logs and OOF diagnostics for exp017."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from amp_utils import cuda_autocast
-from dataset import PrecipDataset, load_norm_stats, make_group_kfold_split, read_rows
+from dataset import PrecipDataset, features_from_config, load_norm_stats, make_group_kfold_split, read_rows
 from model import build_model, prediction_from_output
 
 
@@ -415,7 +415,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
     isotonic_hist = empty_isotonic_hist(len(isotonic_edges) - 1)
     # Cached per-batch (pred, target) tiles so we can score calibration_comparison (raw vs.
     # linear vs. isotonic OOF tile_rmse) in a cheap CPU-only second pass after fitting, without
-    # a second GPU forward pass. ~68M pixels * 4 bytes * 2 arrays =~ 550MB for the full exp015 OOF
+    # a second GPU forward pass. ~68M pixels * 4 bytes * 2 arrays =~ 550MB for the full OOF
     # set -- fine for a single analysis process.
     cached_pred_batches: list[np.ndarray] = []
     cached_target_batches: list[np.ndarray] = []
@@ -439,6 +439,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
             has_target=True,
             norm_stats=norm_stats,
             augment=False,
+            features=features_from_config(config),
         )
         loader = DataLoader(
             ds,
@@ -603,7 +604,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
         "threshold": float(best_value_threshold_row["value_threshold"]) if best_value_threshold_row else 0.0,
         "rain_prob_threshold": float(best_threshold_row["rain_prob_threshold"]) if best_threshold_row else 0.0,
         "selection_metric": selection_metric,
-        "source": "exp015_oof (exp009 checkpoints)",
+        "source": "exp017_oof",
         "isotonic": isotonic_calibration,
     }
     calibration_path = analysis_dir / "oof_calibration.json"
@@ -644,7 +645,7 @@ def main() -> None:
 
     start = time.time()
     config = load_config(Path(args.config))
-    analysis_dir = resolve_path(config["paths"].get("analysis_dir", "../../outputs/analysis/exp015"))
+    analysis_dir = resolve_path(config["paths"].get("analysis_dir", "../../outputs/analysis/exp017"))
     analysis_dir.mkdir(parents=True, exist_ok=True)
     model_dir = resolve_path(config["paths"].get("source_model_dir", config["paths"]["model_dir"]))
     checkpoint_paths = [Path(p) for p in args.checkpoint] if args.checkpoint else sorted(model_dir.glob("best_model_fold*.pt"))

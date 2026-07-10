@@ -58,14 +58,27 @@ exp009本番checkpointはこのマシンにないため、以下は1エポック
   生ログ出力し、`mode=isotonic` 指定時に生の calibrated 値が linear と有意に乖離することを
   直接確認、max diff 0.036)。
 
+## calibration_comparison (追加: 2026-07-10)
+
+初回のクラウド実行では `oof_calibration.json`(線形scale/bias + isotonic knots)は生成されたが、
+「実際にtile_rmseが下がるか」は元の `analyze_oof.py` の設計上まだ記録されていなかった(既存の
+線形scale/bias自体も、これまで効果を検証せず値だけ保存していたのと同じ)。そこで
+`analyze_oof.py` に `calibration_comparison`(生pred / 線形補正後 / isotonic補正後 の3通りの
+OOF `tile_rmse` を、モデルへの再フォワードなしでキャッシュ済みタイルから計算)を追加した
+(`compare_calibration_effect()`)。合成データで「isotonicがraw/linearよりtile_rmseを改善する」
+ケースを正しく検出できることを確認済み。**この情報は再実行しないと得られない**ため、
+`sbatch singularity_run.sh config.yaml analyze` の再実行が必要。
+
 ## Next steps
 
-1. クラウドで `sbatch singularity_run.sh config.yaml analyze` を実行し、exp009の実チェックポイント
-   に対する実際の isotonic curve を得る。
-2. `oof_group_metrics.csv` / OOF `tile_rmse` を calibrationなし・線形・isotonicの3通りで比較。
-3. 改善するなら `submit_calibrated` で提出物を作り、`exp014`(tile-overlap patch, `apply_overlap.py`)
-   をこの提出物の上に重ねて最終提出候補にする — overlap patchは実測GPM値で上書きするので、
-   calibrationの精度に関わらず常に後段に置く。
+1. クラウドで `sbatch singularity_run.sh config.yaml analyze` を再実行し、
+   `analysis_summary.json["calibration_comparison"]` で `raw_tile_rmse` / `linear_tile_rmse` /
+   `isotonic_tile_rmse` を比較する。
+2. isotonicがraw/linearより明確に低ければ `submit_calibrated` で提出物を作る。悪化・横ばいなら
+   G-027aは見送り、G-026(quantile head)に進む。
+3. 改善するなら、`exp014`(tile-overlap patch, `apply_overlap.py`)をこの提出物の上に重ねて最終
+   提出候補にする — overlap patchは実測GPM値で上書きするので、calibrationの精度に関わらず常に
+   後段に置く。
 
 ## Outputs
 

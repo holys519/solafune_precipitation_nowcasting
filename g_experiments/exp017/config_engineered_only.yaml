@@ -1,0 +1,90 @@
+experiment:
+  name: exp017
+  description: "Exp017 (G-031): engineered-only arm: uint8-domain physics channels, no canonical bands"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 2
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+
+# G-031 feature switches (doc/discussion_insights.md §3). Channel math (see
+# expected_in_channels in dataset.py): frames = max_observations * context_rows = 6;
+# in_channels = frames*(16 + 6*canonical + 3*engineered) + frames masks
+#               + context_rows*2*engineered + 3 one-hot.
+# both on: 163 / engineered only: 127 / canonical only: 141 / both off: 105 (=exp009).
+features:
+  canonical_bands: false
+  engineered: true
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null   # full data
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: two_head_compact_unet
+  in_channels: 127
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+
+loss:
+  name: two_head_rain
+  rain_threshold: 0.0
+  pos_weight: 2.0
+  bce_weight: 0.1
+  bce_pos_weight: 3.0
+  amount_weight: 0.5
+  prediction_weight: 1.0
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp017/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp017
+  output_dir: ../../outputs/submissions/exp017
+  submission_zip: ../../outputs/submissions/exp017_submission.zip
+  analysis_dir: ../../outputs/analysis/exp017
+  norm_stats: norm_stats.json

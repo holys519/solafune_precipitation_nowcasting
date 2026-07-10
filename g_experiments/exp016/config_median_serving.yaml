@@ -1,0 +1,101 @@
+experiment:
+  name: exp016
+  description: "Exp016 (G-030) median-serving diagnostic arm: serve exp(mu), no mean correction"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 2
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+  # Finding 9 (doc/discussion_insights.md §3): 235 all-Meteosat rows have a target but zero
+  # observation files — label noise. Dropped from TRAIN rows only (never valid/eval).
+  drop_zero_obs_rows: true
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null   # full data
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: hurdle_lognormal_unet
+  in_channels: 105
+  base_channels: 48
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet
+  encoder_depth: 3
+  decoder_channels: [128, 64, 32]
+  clip_min: 0.0
+  # "predicted": per-pixel sigma via Gaussian NLL (learns the conditional spread the
+  # exp(sigma^2/2) mean correction needs). "fixed": constant sigma below, NLL reduces to
+  # wet-only MSE on ln(y) — the fallback arm if per-pixel sigma proves unstable on ~20 episodes.
+  sigma_mode: predicted
+  fixed_sigma: 1.0
+  mu_min: -6.0
+  mu_max: 5.0
+  sigma_min: 0.1
+  sigma_max: 2.0
+  amount_cap: 150.0          # max observed train GPM is ~96.5; caps exp() blow-ups
+  # 1.0 = serve the log-normal mean exp(mu + sigma^2/2) (the RMSE-optimal estimator).
+  # 0.0 = serve the median exp(mu) — ablation arm to confirm the ~3.8x mean/median gap on OOF.
+  serving_sigma_scale: 0.0
+
+loss:
+  name: hurdle_lognormal
+  rain_threshold: 0.0
+  # Both terms deliberately unweighted (tail/class re-weighting measured net-negative on this
+  # dataset — doc/discussion_insights.md §2). No pos_weight / bce_pos_weight on purpose.
+  bce_weight: 1.0
+  intensity_weight: 1.0
+  prediction_weight: 0.0
+  min_wet_target: 0.01       # GPM is quantized to a 0.01 grid; floor for ln(y)
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  # "linear" = pred*scale+bias fit. "isotonic" = monotonic pred->target curve (G-027a machinery,
+  # inherited from exp015's analyze_oof). The hurdle head should need far less correction than
+  # two_head_rain did — compare calibration_comparison in analysis_summary.json before enabling.
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp016/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp016
+  output_dir: ../../outputs/submissions/exp016
+  submission_zip: ../../outputs/submissions/exp016_submission.zip
+  analysis_dir: ../../outputs/analysis/exp016
+  norm_stats: norm_stats.json

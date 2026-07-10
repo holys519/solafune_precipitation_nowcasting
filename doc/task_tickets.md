@@ -7,8 +7,9 @@ Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). 
 `doc/research_survey.md` for the research-driven roadmap after exp003. See
 `doc/public_scores.md` for the current leaderboard table,
 `doc/experiment_tracking_design.md` for the registry/graphing design behind the `I-XXX` tickets
-below, and `doc/research_survey_v2.md` for the round-2 literature survey behind the `G-026`-`G-029`
-tickets.
+below, `doc/research_survey_v2.md` for the round-2 literature survey behind the `G-026`-`G-029`
+tickets, and `doc/discussion_insights.md` for the official-discussion analysis behind the
+`G-030`-`G-034` (Round 4 / exp016-exp020) tickets.
 
 ## Track convention
 
@@ -249,8 +250,8 @@ independently re-fetched and verified to match the survey's claims before these 
 
 | ID | Track | Exp | Title | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| G-026 | g_experiments | exp015 | Multi-quantile amount head (pinball loss, τ∈{0.5,0.9,0.99} + monotonicity), OOF-swept for `tile_rmse` | P0 | Not started |
-| G-027a | g_experiments | exp015 | Post-processing: OOF-fit isotonic calibration of amount-head output (replaces linear scale/bias in `oof_calibration.json`) | P0 | Implemented as `g_experiments/exp015` (reuses `g_model/exp009` checkpoints read-only, own outputs dir, `sbatch singularity_run.sh`); pipeline verified end-to-end on 3090 with a throwaway checkpoint; needs a real cloud run against exp009's actual checkpoints for a real curve + public score |
+| G-026 | g_experiments | — | Multi-quantile amount head (pinball loss, τ∈{0.5,0.9,0.99} + monotonicity), OOF-swept for `tile_rmse` | — | **Superseded by G-030** (2026-07-10): two teams' measured evidence in the official discussion (`doc/discussion_insights.md` §2) shows serving quantiles costs 0.006–0.15 LB because the RMSE-optimal serving is E[Y\|X] and wet pixels are log-normal with mean/median≈3.8x. The hurdle log-normal head (G-030/exp016) targets the same 4x underestimation with the mathematically correct estimator |
+| G-027a | g_experiments | exp015 | Post-processing: OOF-fit isotonic calibration of amount-head output (replaces linear scale/bias in `oof_calibration.json`) | P0 | Done — public RMSE 0.7096658388930687 (2026/07/10 08:47:38), -0.0056780510175330 vs exp009 base. Not yet stacked with exp014's tile-overlap patch |
 | G-027b | g_experiments | — | Input feature: per-satellite IR->rain empirical curve (`bt_rain_response.csv`) evaluated at coldest IR band, as auxiliary input channel | P1 | Not started |
 | G-028 | g_experiments | — | Architecture: dilated-conv bottleneck (dilation 2,4) instead of extra downsampling in `enc2`/`enc3` | P2 | Not started; exploratory, motivated by `radial_power_spectrum.csv` (81% of target power at wavenumber 1-2) |
 | G-029 | g_experiments | — | Loss: radial-power-spectrum auxiliary term comparing predicted vs. target spectra (reuses `l_eda/exp002` FFT code) | P3 | Not started; run only after G-026/G-027 to keep comparisons readable |
@@ -315,13 +316,26 @@ output matches `sklearn` exactly), and a real end-to-end run of `exp015`'s actua
 1-epoch/512-sample checkpoint (standing in for exp009's real one via `SOURCE_MODEL_DIR` override) —
 produced a valid monotonic `oof_calibration.json` and an `inference.py` run with
 `calibration_mode: isotonic` whose raw calibrated values genuinely diverge from linear mode (max
-diff 0.036 on this undertrained checkpoint). Not yet run against exp009's actual cloud checkpoints,
-so no real curve or public score exists yet — next step is `sbatch singularity_run.sh` (default
-stage `submit_calibrated`) in `g_experiments/exp015` on the cluster where exp009's real checkpoints
-live, then compare OOF `tile_rmse` uncalibrated vs. linear vs. isotonic (`outputs/analysis/exp015/`)
-before deciding whether to ship the resulting `exp015_submission.zip` — likely stacked with exp014's
-tile-overlap patch applied last, since that overwrites with real GPM truth unaffected by
-calibration.
+diff 0.036 on this undertrained checkpoint).
+
+**Result (2026-07-10, real exp009 checkpoints on cloud)**: `exp015_submission.zip` scored
+0.7096658388930687 on the public leaderboard, -0.0056780510175330 vs. exp009's raw 0.7153438899106017
+(`doc/public_scores.md`). Confirmed real: `oof_calibration.json`'s linear `scale`/`bias` matched
+exp009's own historical values exactly. Notably, an offline approximate check (applying the
+isotonic curve to `oof_sample_metrics.csv`'s per-tile `pred_max`) showed almost no correction of the
+tile-peak underestimation the ticket originally targeted (mean `pred_max` 2.13 -> 2.10 vs. a target
+mean of 7.90; the isotonic curve's top bins are sparse and get pooled near-flat by PAV, e.g.
+pred>=13.24 all map to y~13.10) — yet the real public score still improved. Most likely explanation:
+the win comes from damping over-confident mid/high false-alarm pixels (reducing their contribution to
+squared error) rather than fixing peak amplitude, which the tile-peak proxy wasn't measuring. Also
+added `analyze_oof.py`'s `calibration_comparison` (raw/linear/isotonic OOF `tile_rmse` computed from
+cached OOF tiles, no extra GPU pass) for a more direct before/after read next time, though the public
+score already answers the go/no-go question for this round. **Not yet stacked with exp014's
+tile-overlap patch** — pointing `g_experiments/exp014/apply_overlap.py` at exp015's raw predictions
+instead of exp009's (both effects are independent: calibration changes non-overlap pixels, the patch
+overwrites overlap-region pixels with real GPM truth) is the next likely best-single-submission
+candidate, expected around 0.6968727727408199 - 0.0056780510175330 ≈ 0.691 if the two effects are
+roughly additive.
 
 ### G-028 — dilated-conv bottleneck (exploratory)
 
@@ -343,6 +357,103 @@ after G-026/G-027 are evaluated — it targets the same blur/tail symptom via a 
 stacking three simultaneous untested changes would make the comparison unreadable. Our tile is small
 enough that a full wavelet-decomposition approach (WADEPre) likely has too little scale range to pay
 off, so this stays scoped to the simpler radial-power-spectrum term, not a wavelet loss.
+
+## Round 4 Open Tickets (2026-07-10, from `doc/discussion_insights.md`)
+
+The official discussion (5 posts, analyzed in `doc/discussion_insights.md`) reframes the whole
+problem: a perfect flat tile-mean predictor scores 0.677 on the official metric ("the wall"), the LB
+is literally cut at rank 16/17 by that value, and the perfect-tile-mean + perfect-wet-mask oracle
+scores 0.594 — meaning **within-tile localization** carries 0.083 of headroom, 2.5x the entire
+#1-to-pack gap. Our exp009 lineage (including exp015's calibration) optimizes tile-level amount and
+sits exactly at the wall. Round 4 shifts effort to (a) the mathematically correct estimator (hurdle
+log-normal, replacing both our miscalibrated weighted-BCE two-head and the superseded quantile plan),
+(b) the discussion's measured input-feature wins, and (c) localization. Priorities assume the cloud
+cluster can run many jobs in parallel — exp016/017/019 are independent axes that can run concurrently;
+exp018 builds on whichever head wins; exp020 harvests.
+
+| ID | Track | Exp | Title | Priority | Status |
+| --- | --- | --- | --- | --- | --- |
+| G-030 | g_experiments | exp016 | Hurdle log-normal head: unweighted-BCE occurrence × wet-only ln(y) intensity, serve p·exp(μ+σ²/2) | P0 | Implemented + smoke-tested on 3090 (unit tests: serving formula, wet-only gradients, median arm shares state_dict; 235 zero-obs rows confirmed all-Meteosat); cloud single-fold A/B pending |
+| G-031 | g_experiments | exp017 | Wavelength-aligned canonical bands + uint8-domain physics channels (split-window ratio, IR8.5−W, WV−W, temporal diff, day/night flag) | P0 | Implemented + smoke-tested on 3090 (feature math verified vs hand computation on all 3 satellites); median/IQR norm deferred to keep one change axis; cloud 3-arm A/B pending |
+| G-032 | g_experiments | exp018 | Within-tile localization: high-res internal processing, aux wet-mask head, multi-scale displacement-tolerant loss, new spatial OOF diagnostics | P0 | Not started; the strategic bet — depends on G-030's head |
+| G-033 | g_experiments | exp019 | t+0-frame-centric input design + \|Δ\| change-magnitude channels (+ optional train-time future-frame aux head) | P1 | Not started |
+| G-034 | g_experiments | exp020 | Harvest: 3 seeds × 5 folds of the best config, 6-way TTA, OOF-weighted ensemble, isotonic calibration, drizzle cut, overlap patch last; satellite-mix-weighted CV | P1 | Not started; run after exp016-019 A/Bs settle |
+
+### G-030 — exp016: hurdle log-normal head
+
+Replace `two_head_rain` with the estimator the target's own statistics dictate
+(`doc/discussion_insights.md` §2; wet pixels are log-normal ln(y)~N(−0.66,1.63²)):
+
+- Occurrence head: plain **unweighted** BCE on rain>0 (drop `bce_pos_weight: 3.0` — weighted BCE
+  deliberately mis-calibrates P(rain), and calibration is what makes the product unbiased).
+- Intensity head: trained **only on wet pixels** (masked loss — never sees the 82% zero mass, so it
+  can't be dragged to zero), target ln(y), either fixed-σ MSE or Gaussian NLL predicting per-pixel
+  (μ,σ). Drop `pos_weight: 2.0` (tail re-weighting measured net-negative by the discussion authors).
+- Serving: `pred = P(rain) * exp(μ + σ²/2)` — the conditional mean, never a median/quantile. If NLL's
+  σ is unstable on ~20 episodes, fall back to a per-satellite constant σ estimated from train wet
+  pixels (measured global σ=1.63).
+- Data cleanup from Finding 9: drop the 235 zero-input (all-Meteosat) rows; pad 2-frame rows by
+  repeating the last frame (verify what our current padding does first).
+- Base: exp009's 105ch successor-row inputs and CompactUNet body, so the head change is the only
+  variable. Acceptance: OOF `tile_rmse` < 0.6239 AND `pred_max/target_max` at `target_max>=10`
+  substantially above the current 0.25 (this head targets exactly the exp(σ²/2)≈3.8 mean/median gap
+  we measured as ~4x).
+
+### G-031 — exp017: wavelength alignment + physics channels
+
+Two stacked A/B stages, both from measured discussion findings (`doc/discussion_insights.md` §3):
+
+1. **Alignment only**: reorder each satellite's 16 bands into a canonical physical-wavelength order
+   using the discussion's index table (Meteosat's fixed-index channels are wrong for 2 of 3 key bands;
+   the WV fix alone was measured +25% correlation). This makes shared conv weights see the same
+   physics at the same channel position across satellites — cheaper and more principled than exp011's
+   learned per-satellite stems.
+2. **+Features**: engineered channels computed on raw uint8 **before** normalization: split-window
+   ratio `SPL/(W+1)` (partial corr −0.31/−0.20/−0.13; the classic difference is quantized to death),
+   `IR8.5−W` ("hidden gem" #2 additive feature), `WV−W` (deep-convection proxy), temporal diff
+   `W[t2]−W[t0]`, day/night flag from mean-VIS threshold (covers G-023's intent). Switch normalization
+   to per-(sat,band) median/IQR with clamp(±5).
+
+### G-032 — exp018: within-tile localization (the strategic bet)
+
+The only path below the 0.677 wall is knowing where the rain sits inside the 41×41 tile
+(`doc/discussion_insights.md` §1: wet-mask rung = 0.083 headroom; σ=2px-blurred truth scores 0.38 —
+displacement tolerance beats sharpness). Three mechanisms, ablatable via config:
+
+- **High-res internal processing**: bilinear-upsample input to 128×128, 4-level encoder (the public
+  0.69 solution's layout), decode and adaptive-pool to native 41×41 output (Finding 8: predict at
+  native 41×41; tiles are event-centered so resampling the *target* is harmful, resampling the
+  *input* is not).
+- **Aux wet-mask head**: a segmentation head (Dice or soft-IoU) on rain>0, separate from the
+  calibrated occurrence head so calibration is not polluted; encourages explicit spatial structure.
+- **Multi-scale MSE**: MSE at 41×41 plus 2×2- and 4×4-avg-pooled scales — a cheap
+  displacement-tolerant term that rewards correctly-placed mass even when fine placement is off.
+- **New OOF diagnostics** in analyze_oof: per-tile pred-target spatial correlation (on wet tiles) and
+  wet-mask IoU at the OOF-optimal threshold — these measure localization directly, which `tile_rmse`
+  alone hides. Also report the oracle-wall numbers (flat tile-mean of *our* predictions vs of truth)
+  per run so we can see when we've genuinely broken below flat-mean information.
+
+### G-033 — exp019: t+0-centric temporal design
+
+Information peaks exactly at target time t, and the t+0 frame is available for 99.4% of eval rows via
+the successor row's observation list — which exp009 already ingests, but only as 3 of 6
+equally-stacked frames (`doc/discussion_insights.md` §4). Restructure the input so t+0 is the primary
+frame: order channels so the model's first conv sees t+0 first; add |Δ| change-magnitude channels
+(measured Spearman +0.69 with rain — the useful temporal signal; do NOT add optical flow, measured
+ρ≈−0.05, confirming our own exp005/l_eda findings). For rows lacking a successor (~0.6%), fall back to
+the newest causal frame with the existing mask-channel convention. Optional second stage: a
+train-time-only auxiliary head predicting the t+0 IR-window frame from causal frames (advection
+learning); low priority since we already have t+0 at eval time.
+
+### G-034 — exp020: harvest
+
+Once exp016-019 A/Bs pick winners: 3 seeds × 5 folds of the winning config; extend TTA from 3-view
+flips to 6-way (flips + rot90/180/270 — the metric-relevant augmentation group our training already
+uses); OOF-weighted ensemble (updates G-019); isotonic calibration refit on the ensemble's OOF
+(exp015 machinery); drizzle value-threshold; exp014 overlap patch applied last (it overwrites with
+GPM truth, so it always stacks on top). Selection decisions throughout use CV weighted by the test
+satellite mix (himawari 39%, meteosat 39%, goes 22%) per Finding 10, and treat LB deltas < ~0.005 as
+noise (single-split geography luck spans 1.15–1.71 per the discussion's measurement).
 
 ### G-016 — exp012: successor-row + satellite-adapter two-head
 

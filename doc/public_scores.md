@@ -11,6 +11,7 @@ Sources:
 - `doc/research_survey.md`
 - Solafune submission list copied by the user on 2026-07-08
 - Solafune submission list copied by the user on 2026-07-09
+- Solafune submission list copied by the user on 2026-07-10
 
 ## Current Best
 
@@ -23,11 +24,12 @@ Sources:
 | 5 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
 | 6 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
 | 7 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
-| 8 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
-| 9 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
-| 10 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
-| 11 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
-| 12 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | unknown | valid | Local baseline from `doc/exp001_retrospective.md` |
+| 8 | exp007 | `exp007_submission.zip` | 0.7362157342148196 | 2026/07/09 01:20:50 | valid | Multi-exp equal-weight ensemble |
+| 9 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
+| 10 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
+| 11 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
+| 12 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
+| 13 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | unknown | valid | Local baseline from `doc/exp001_retrospective.md` |
 
 ## Submission Log
 
@@ -39,6 +41,7 @@ Sources:
 | 2026/07/08 02:48:44 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | holyholyholy | valid | Satellite-specific adapter |
 | 2026/07/08 07:14:08 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | holyholyholy | valid | A100_exp002 |
 | 2026/07/08 09:40:50 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | holyholyholy | valid | A100_exp003 |
+| 2026/07/09 01:20:50 | exp007 | `exp007_submission.zip` | 0.7362157342148196 | holyholyholy | valid | Multi-exp equal-weight ensemble |
 | 2026/07/09 12:36:08 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | holyholyholy | valid | Official Metric + Drizzle Post-Processing |
 | 2026/07/09 12:38:39 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | holyholyholy | valid | Successor-Row Frames |
 | 2026/07/09 12:40:03 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | holyholyholy | valid | Data Cleanup Two-Head |
@@ -94,11 +97,13 @@ top is within-tile localization, not tile-level amount accuracy. Round 4 (exp016
   even though exp006 alone did not beat exp004.
 - exp008 slightly improves over exp004, so the official-metric/drizzle post-processing path remains
   worth keeping as a low-risk post-processing layer.
-- exp010 improves over exp005/exp006/exp002/exp003 but is worse than exp004/exp008/exp011/exp009,
+- exp010 improves over exp005/exp006/exp002/exp003 but is worse than exp004/exp008/exp011/exp009/exp014,
   so its cleanup assumptions need OOF diagnostics before becoming the default.
+- exp007 improves over exp005/exp006/exp002/exp003, but the equal-weight ensemble is still worse
+  than exp004 and newer exp008-exp011/exp014 submissions. Future ensembles should be OOF-weighted and
+  probably centered on exp009 rather than mixing all sources equally.
 - exp002 improved over exp001 only modestly on public RMSE, so future changes should be judged with
   OOF diagnostics as well as public score.
-- exp007 public score is not recorded here yet.
 
 ## Template For Future Submissions
 

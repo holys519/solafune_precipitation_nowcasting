@@ -1,0 +1,24 @@
+experiment:
+  name: exp014
+  description: "Exp014: patch eval predictions with train GPM truth in confirmed tile-overlap regions (G-022)"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+
+overlap:
+  pairs_table: overlap_pairs.csv
+  # Skip a pair if the offset-vote agreement (see overlap_pairs.csv) is below this. All 3
+  # confirmed pairs are >= 0.69; set higher to drop the noisier north_sumatra/aceh pair if desired.
+  min_agreement: 0.0
+
+paths:
+  # Base prediction to patch: point this at whichever experiment's inference output is best
+  # at the time (e.g. exp009, or a later winner). Must already contain evaluation_target.csv
+  # and test_files/*.tif (i.e. run that experiment's inference.py first).
+  source_submission_dir: ../../outputs/submissions/exp009
+  output_dir: ../../outputs/submissions/exp014
+  submission_zip: ../../outputs/submissions/exp014_submission.zip

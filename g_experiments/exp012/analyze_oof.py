@@ -14,6 +14,7 @@ from typing import Any
 import numpy as np
 import torch
 import yaml
+from sklearn.isotonic import IsotonicRegression
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -106,6 +107,66 @@ def empty_stats() -> dict[str, float]:
 
 def empty_detection_stats() -> dict[str, float]:
     return {"tp": 0.0, "fp": 0.0, "fn": 0.0, "tn": 0.0}
+
+
+def isotonic_bin_edges() -> np.ndarray:
+    """Fixed pixel-value bins for the isotonic calibration histogram.
+
+    Fine (0.05) resolution near zero where most mass sits, coarser mid-range, log-spaced tail
+    up to 200 to cover the heaviest observed GPM values (target_max up to ~96 in exp009 OOF).
+    """
+    low = np.linspace(0.0, 2.0, 41)
+    mid = np.linspace(2.0, 20.0, 37)[1:]
+    high = np.geomspace(20.0, 200.0, 21)[1:]
+    return np.concatenate([low, mid, high]).astype(np.float64)
+
+
+def empty_isotonic_hist(n_bins: int) -> dict[str, np.ndarray]:
+    return {
+        "count": np.zeros(n_bins, dtype=np.float64),
+        "sum_pred": np.zeros(n_bins, dtype=np.float64),
+        "sum_target": np.zeros(n_bins, dtype=np.float64),
+    }
+
+
+def update_isotonic_hist(
+    hist: dict[str, np.ndarray], edges: np.ndarray, flat_pred: np.ndarray, flat_target: np.ndarray
+) -> None:
+    n_bins = len(edges) - 1
+    bin_idx = np.clip(np.digitize(flat_pred, edges) - 1, 0, n_bins - 1)
+    hist["count"] += np.bincount(bin_idx, minlength=n_bins).astype(np.float64)
+    hist["sum_pred"] += np.bincount(bin_idx, weights=flat_pred, minlength=n_bins)
+    hist["sum_target"] += np.bincount(bin_idx, weights=flat_target, minlength=n_bins)
+
+
+def fit_isotonic_calibration(hist: dict[str, np.ndarray], min_bins: int = 2) -> dict[str, Any] | None:
+    """Fit a monotonic (isotonic) pred->target calibration curve from a binned pixel histogram.
+
+    Bins are collapsed to (mean_pred, mean_target) points weighted by pixel count before fitting,
+    which keeps this cheap (dozens of points) regardless of how many OOF pixels were seen, and is
+    consistent with the existing linear scale/bias fit also being computed from pooled sums rather
+    than per-tile-weighted statistics.
+    """
+    count = hist["count"]
+    valid = count > 0
+    if int(valid.sum()) < min_bins:
+        return None
+    bin_pred = hist["sum_pred"][valid] / count[valid]
+    bin_target = hist["sum_target"][valid] / count[valid]
+    bin_weight = count[valid]
+
+    model = IsotonicRegression(y_min=0.0, increasing=True, out_of_bounds="clip")
+    model.fit(bin_pred, bin_target, sample_weight=bin_weight)
+    x = np.asarray(model.X_thresholds_, dtype=np.float64)
+    y = np.asarray(model.y_thresholds_, dtype=np.float64)
+    if x.size < 2:
+        return None
+    return {
+        "x": x.tolist(),
+        "y": y.tolist(),
+        "n_bins_used": int(valid.sum()),
+        "n_pixels": float(count.sum()),
+    }
 
 
 def update_detection_stats(stats: dict[str, float], pred_rain: np.ndarray, target_rain: np.ndarray) -> None:
@@ -314,6 +375,8 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
         "sum_pred2": 0.0,
         "sum_pred_target": 0.0,
     }
+    isotonic_edges = isotonic_bin_edges()
+    isotonic_hist = empty_isotonic_hist(len(isotonic_edges) - 1)
 
     for checkpoint_path in checkpoint_paths:
         fold = checkpoint_fold(checkpoint_path)
@@ -382,6 +445,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
             calibration_sums["sum_target"] += float(flat_target.sum())
             calibration_sums["sum_pred2"] += float(np.square(flat_pred).sum())
             calibration_sums["sum_pred_target"] += float((flat_pred * flat_target).sum())
+            update_isotonic_hist(isotonic_hist, isotonic_edges, flat_pred, flat_target)
 
             for i, unique_id in enumerate(batch["unique_id"]):
                 pred_arr = pred_np[i, 0]
@@ -487,6 +551,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
     else:
         scale_with_bias = scale
         bias = 0.0
+    isotonic_calibration = fit_isotonic_calibration(isotonic_hist)
     calibration = {
         "scale": float(scale_with_bias),
         "bias": float(bias),
@@ -495,6 +560,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
         "rain_prob_threshold": float(best_threshold_row["rain_prob_threshold"]) if best_threshold_row else 0.0,
         "selection_metric": selection_metric,
         "source": "exp012_oof",
+        "isotonic": isotonic_calibration,
     }
     calibration_path = analysis_dir / "oof_calibration.json"
     calibration_path.write_text(json.dumps(calibration, indent=2), encoding="utf-8")

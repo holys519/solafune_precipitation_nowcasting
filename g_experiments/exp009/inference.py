@@ -52,21 +52,58 @@ def copy_csv(src: Path, dst: Path) -> None:
     dst.write_bytes(src.read_bytes())
 
 
-def load_calibration(path: Path | None) -> dict[str, float] | None:
+def load_calibration(path: Path | None) -> dict[str, Any] | None:
     if path is None or not path.exists():
         return None
     raw = json.loads(path.read_text(encoding="utf-8"))
-    return {
+    calibration: dict[str, Any] = {
         "scale": float(raw.get("scale", 1.0)),
         "bias": float(raw.get("bias", 0.0)),
         "threshold": float(raw.get("threshold", 0.0)),
         "rain_prob_threshold": float(raw.get("rain_prob_threshold", 0.0)),
     }
+    isotonic = raw.get("isotonic")
+    if isotonic and isotonic.get("x") and isotonic.get("y"):
+        x = torch.tensor([float(v) for v in isotonic["x"]], dtype=torch.float32)
+        y = torch.tensor([float(v) for v in isotonic["y"]], dtype=torch.float32)
+        if x.numel() >= 2:
+            calibration["isotonic_x"] = x
+            calibration["isotonic_y"] = y
+    return calibration
 
 
-def apply_calibration(pred: torch.Tensor, clip_min: float, calibration: dict[str, float] | None) -> torch.Tensor:
+def apply_isotonic_curve(pred: torch.Tensor, x_knots: torch.Tensor, y_knots: torch.Tensor) -> torch.Tensor:
+    """Monotonic piecewise-linear interpolation through (x_knots, y_knots), clipped at the ends.
+
+    x_knots must be sorted ascending. Mirrors sklearn IsotonicRegression(out_of_bounds="clip").
+    """
+    shape = pred.shape
+    flat = pred.reshape(-1)
+    x_knots = x_knots.to(device=flat.device, dtype=flat.dtype)
+    y_knots = y_knots.to(device=flat.device, dtype=flat.dtype)
+    idx = torch.searchsorted(x_knots, flat).clamp(1, x_knots.numel() - 1)
+    x0 = x_knots[idx - 1]
+    x1 = x_knots[idx]
+    y0 = y_knots[idx - 1]
+    y1 = y_knots[idx]
+    t = ((flat - x0) / (x1 - x0).clamp_min(1e-12)).clamp(0.0, 1.0)
+    out = y0 + t * (y1 - y0)
+    out = torch.where(flat <= x_knots[0], y_knots[0], out)
+    out = torch.where(flat >= x_knots[-1], y_knots[-1], out)
+    return out.reshape(shape)
+
+
+def apply_calibration(
+    pred: torch.Tensor,
+    clip_min: float,
+    calibration: dict[str, Any] | None,
+    mode: str = "linear",
+) -> torch.Tensor:
     if calibration is not None:
-        pred = pred * calibration["scale"] + calibration["bias"]
+        if mode == "isotonic" and "isotonic_x" in calibration:
+            pred = apply_isotonic_curve(pred, calibration["isotonic_x"], calibration["isotonic_y"])
+        else:
+            pred = pred * calibration["scale"] + calibration["bias"]
     return pred.clamp_min(clip_min)
 
 
@@ -237,8 +274,14 @@ def main() -> None:
         calibration_path = resolve_path(post_cfg["calibration_path"])
     use_calibration = bool(args.use_calibration or post_cfg.get("use_oof_calibration", False))
     calibration = load_calibration(calibration_path) if use_calibration else None
+    calibration_mode = str(post_cfg.get("calibration_mode", "linear"))
     if calibration is not None:
-        print(f"using calibration: {calibration_path} {calibration}", flush=True)
+        if calibration_mode == "isotonic" and "isotonic_x" not in calibration:
+            print("calibration_mode=isotonic requested but oof_calibration.json has no usable "
+                  "isotonic curve; falling back to linear scale/bias", flush=True)
+            calibration_mode = "linear"
+        print(f"using calibration (mode={calibration_mode}): {calibration_path} "
+              f"{ {k: v for k, v in calibration.items() if not k.startswith('isotonic')} }", flush=True)
 
     start = time.time()
     collected = 0
@@ -253,7 +296,7 @@ def main() -> None:
             rain_prob_threshold = float(post_cfg.get("rain_prob_threshold", 0.0))
         if rain_prob_threshold > 0 and "rain_prob" in output:
             pred = torch.where(output["rain_prob"] < rain_prob_threshold, torch.zeros_like(pred), pred)
-        pred = apply_calibration(pred, clip_min=clip_min, calibration=calibration)
+        pred = apply_calibration(pred, clip_min=clip_min, calibration=calibration, mode=calibration_mode)
         pred_np = pred.detach().cpu().numpy().astype(np.float32)
         filenames = batch["gpm_imerg_filename"]
         unique_ids = batch["unique_id"]
@@ -334,7 +377,8 @@ def main() -> None:
         "prediction_dir": str(prediction_dir),
         "checkpoints": [str(p) for p in checkpoint_paths],
         "flip_tta": use_flip_tta,
-        "calibration": calibration,
+        "calibration": {k: v for k, v in calibration.items() if not k.startswith("isotonic")} if calibration else None,
+        "calibration_mode": calibration_mode,
         "value_threshold": value_threshold,
         "temporal_smoothing": post_cfg.get("temporal_smoothing", {}),
         "prediction_summary_csv": str(prediction_summary_path),

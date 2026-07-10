@@ -1,0 +1,4 @@
+eval_location,train_location,satellite,gpm_offset_dy,gpm_offset_dx,agreement,mean_peak_corr,samples_checked,notes
+north_sumatra,aceh,himawari,-17,-23,0.69,0.863,150,"two adjacent-pixel candidates from IR resize aliasing; chosen by higher mean overlap corr (0.8425 vs 0.7947 for (-18,-22))"
+northeast_malaysia,hat_yai,himawari,-22,-9,1.00,1.000,80,"unanimous across all 80 sampled shared timestamps"
+sylhet,dhaka,himawari,11,-15,1.00,1.000,80,"unanimous across all 80 sampled shared timestamps"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run GPU inference for exp013 and write prediction GeoTIFFs.
+"""Run GPU inference for exp015 (reuses exp009 checkpoints) and write prediction GeoTIFFs.
 
 Supports:
 - multi-checkpoint ensembling (average raw predictions across --checkpoint args, e.g. one
@@ -24,7 +24,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from amp_utils import cuda_autocast
-from dataset import PrecipDataset, context_offsets_from_config, load_norm_stats, load_shift_lookup, read_rows
+from dataset import PrecipDataset, load_norm_stats, read_rows
 from model import build_model, prediction_from_output
 from tiff_utils import write_float32_like_template
 
@@ -248,8 +248,7 @@ def main() -> None:
         max_observations=int(config["data"]["max_observations"]),
         satellite_channels=int(config["data"]["satellite_channels"]),
         target_size=target_size,
-        context_offsets=context_offsets_from_config(config),
-        shift_lookup=load_shift_lookup(config),
+        context_rows=int(config["data"].get("context_rows", 1)),
         has_target=False,
         norm_stats=norm_stats,
         augment=False,

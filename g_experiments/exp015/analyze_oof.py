@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create fold logs and OOF diagnostics for exp011."""
+"""Create fold logs and OOF diagnostics for exp015 (reuses exp009 checkpoints)."""
 
 from __future__ import annotations
 
@@ -559,7 +559,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
         "threshold": float(best_value_threshold_row["value_threshold"]) if best_value_threshold_row else 0.0,
         "rain_prob_threshold": float(best_threshold_row["rain_prob_threshold"]) if best_threshold_row else 0.0,
         "selection_metric": selection_metric,
-        "source": "exp011_oof",
+        "source": "exp015_oof (exp009 checkpoints)",
         "isotonic": isotonic_calibration,
     }
     calibration_path = analysis_dir / "oof_calibration.json"
@@ -591,7 +591,7 @@ def main() -> None:
 
     start = time.time()
     config = load_config(Path(args.config))
-    analysis_dir = resolve_path(config["paths"].get("analysis_dir", "../../outputs/analysis/exp011"))
+    analysis_dir = resolve_path(config["paths"].get("analysis_dir", "../../outputs/analysis/exp015"))
     analysis_dir.mkdir(parents=True, exist_ok=True)
     model_dir = resolve_path(config["paths"].get("source_model_dir", config["paths"]["model_dir"]))
     checkpoint_paths = [Path(p) for p in args.checkpoint] if args.checkpoint else sorted(model_dir.glob("best_model_fold*.pt"))

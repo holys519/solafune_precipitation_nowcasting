@@ -1,0 +1,67 @@
+experiment:
+  name: l_eda_exp002
+  description: "Pixel-level EDA round 2: adjacency, lag information, IR-rain response, spectra"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  target_height: 41
+  target_width: 41
+
+sampling:
+  random_seed: 42
+
+bands:
+  ir_window_default: 13
+  visible: [0, 1, 2]
+
+analyses:
+  train_eval_adjacency: true
+  ir_rain_lag: true
+  target_autocorr: true
+  bt_rain_response: true
+  band_health: true
+  target_quantization: true
+  spectrum: true
+  position_bias: true
+  oof_join: true
+
+adjacency:
+  pairs_table: train_eval_feature_shift.csv
+  max_timestamps_per_pair: 24
+
+ir_rain_lag:
+  row_offsets: [-3, -2, -1, 0, 1, 2, 3]
+  max_rows: 350
+  min_target_mean: 0.2
+
+target_autocorr:
+  row_lags: [1, 2, 3, 4, 6]
+  max_rows_per_location: 40
+
+bt_rain_response:
+  max_rows: 900
+  value_bins: 32
+
+band_health:
+  max_rows: 450
+
+target_quantization:
+  max_rows: 1200
+
+spectrum:
+  max_rows: 200
+  min_target_mean: 0.2
+
+position_bias:
+  max_rows: 3000
+
+oof_join:
+  oof_sample_metrics: ../../outputs/analysis/exp009/oof_sample_metrics.csv
+  max_rows: 1500
+
+paths:
+  output_dir: ../../outputs/l_eda/exp002

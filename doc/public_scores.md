@@ -1,6 +1,6 @@
 # Public Scores
 
-Last updated: 2026-07-09
+Last updated: 2026-07-10
 
 This file tracks public/valid leaderboard scores for the Solafune precipitation nowcasting
 competition. Metric is RMSE, so lower is better.
@@ -16,16 +16,17 @@ Sources:
 
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
-| 1 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | 2026/07/09 12:38:39 | valid | Successor-Row Frames |
-| 2 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | 2026/07/09 12:44:58 | valid | Satellite Adapter Two-Head |
-| 3 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
-| 4 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
-| 5 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
-| 6 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
-| 7 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
-| 8 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
-| 9 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
-| 10 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | unknown | valid | Local baseline from `doc/exp001_retrospective.md` |
+| 1 | exp014 | `exp014_submission.zip` | 0.6968727727408199 | 2026/07/10 12:44:13 | valid | Tile-Overlap GPM Copy Patch (post-processing on exp009 base, G-022) |
+| 2 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | 2026/07/09 12:38:39 | valid | Successor-Row Frames |
+| 3 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | 2026/07/09 12:44:58 | valid | Satellite Adapter Two-Head |
+| 4 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
+| 5 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
+| 6 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
+| 7 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
+| 8 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
+| 9 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
+| 10 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
+| 11 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | unknown | valid | Local baseline from `doc/exp001_retrospective.md` |
 
 ## Submission Log
 
@@ -41,6 +42,7 @@ Sources:
 | 2026/07/09 12:38:39 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | holyholyholy | valid | Successor-Row Frames |
 | 2026/07/09 12:40:03 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | holyholyholy | valid | Data Cleanup Two-Head |
 | 2026/07/09 12:44:58 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | holyholyholy | valid | Satellite Adapter Two-Head |
+| 2026/07/10 12:44:13 | exp014 | `exp014_submission.zip` | 0.6968727727408199 | holyholyholy | valid | Tile-Overlap GPM Copy Patch (post-processing on exp009 base, G-022) |
 
 ## Reference / Non-Primary Scores
 
@@ -50,8 +52,13 @@ Sources:
 
 ## Observations
 
-- exp009 is the current best public result. Successor-row frames are the strongest signal so far,
-  improving over the previous exp004 anchor by 0.0099094827799572 RMSE.
+- exp014 is the current best public result, confirming the tile-overlap GPM-copy patch
+  (`doc/tile_overlap_discovery.md`, G-022): applying it as pure post-processing on top of the exp009
+  submission improves public RMSE by 0.0184711171697818 (0.7153438899106017 -> 0.6968727727408199),
+  the single largest jump recorded in this table. This validates the FFT cross-correlation overlap
+  detection and the train-train (atlantic_coast/florida) bit-exact copy check used to design it.
+- exp009 was the previous best public result. Successor-row frames are the strongest *modeling*
+  signal so far, improving over the previous exp004 anchor by 0.0099094827799572 RMSE.
 - exp011 improves over exp004, suggesting the satellite-adapter plus two-head combination is useful
   even though exp006 alone did not beat exp004.
 - exp008 slightly improves over exp004, so the official-metric/drizzle post-processing path remains

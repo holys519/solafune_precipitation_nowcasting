@@ -1,13 +1,14 @@
 # Task Tickets
 
-Last updated: 2026-07-09
+Last updated: 2026-07-10
 
 Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). See
 `doc/exp001_retrospective.md` for the analysis behind the exp002 tickets, and
 `doc/research_survey.md` for the research-driven roadmap after exp003. See
-`doc/public_scores.md` for the current leaderboard table and
+`doc/public_scores.md` for the current leaderboard table,
 `doc/experiment_tracking_design.md` for the registry/graphing design behind the `I-XXX` tickets
-below.
+below, and `doc/research_survey_v2.md` for the round-2 literature survey behind the `G-026`-`G-029`
+tickets.
 
 ## Track convention
 
@@ -231,6 +232,117 @@ Source: `outputs/l_eda/exp001/EDA_IMAGE_REPORT.md` (+ its CSVs) and
 | G-020 | g_experiments | exp010 | Ablate the 3 cleanup changes individually to find the one hurting public score | P1 | Not started |
 | G-021 | g_experiments | exp009/011 | Dice/Focal loss on the rain-probability head to push CSI past ~0.46 | P2 | Not started |
 | I-001 | infra | — | Experiment registry + trend-graphing pipeline (see `doc/experiment_tracking_design.md`) | P0 | Design documented, not implemented |
+| G-022 | g_experiments | exp014 | Tile-overlap GPM copy: overwrite eval overlap regions with same-time train GPM truth (see `doc/tile_overlap_discovery.md`) | P0 | Done — public RMSE 0.6968727727408199 (2026/07/10 12:44:13), new best, -0.0184711171697818 vs exp009 base. See `doc/public_scores.md` |
+| G-023 | g_experiments | exp015 | Solar/visible-brightness input feature (day/night conditioning) | P1 | Justified by l_eda/exp002: same-rain-regime night error +16%, visible bands collapse at night |
+| G-024 | g_experiments | exp013 | Successor-weighted context variant `context_offsets: [0, 1, 2]` | P2 | Config-only variant; IR->rain lag curve peaks at +30min and decays fast backwards |
+| G-025 | g_experiments | — | Post-processing: snap predictions to the 0.01 value grid (targets are 99.6% multiples of 0.01, min positive 0.01) | P3 | Not started; expect tiny but safe gain, sweep on OOF first |
+
+## Round 3 Open Tickets (2026-07-10, from `doc/research_survey_v2.md`)
+
+Round 2's OOF/public analysis (`doc/data_characteristics_review.md` §1.3, §1.5) found mid+heavy-rain
+tiles are 41.3% of tiles but 87% of the `tile_rmse` error budget, and heavy-rain amplitude is
+underestimated ~4x (`pred_max/target_max` ≈ 0.25 at `target_max >= 10`). Round 3 targets that
+specifically, via a literature survey filtered through our own measured constraints (small tile,
+~20 independent episodes, small motion, `tile_rmse` metric) — see `doc/research_survey_v2.md` for
+the full reasoning and reference list. Both new citations (arxiv 2605.12762, arxiv 2511.11197) were
+independently re-fetched and verified to match the survey's claims before these tickets were added.
+
+| ID | Track | Exp | Title | Priority | Status |
+| --- | --- | --- | --- | --- | --- |
+| G-026 | g_experiments | exp015 | Multi-quantile amount head (pinball loss, τ∈{0.5,0.9,0.99} + monotonicity), OOF-swept for `tile_rmse` | P0 | Not started |
+| G-027a | g_experiments | exp015 | Post-processing: OOF-fit isotonic calibration of amount-head output (replaces linear scale/bias in `oof_calibration.json`) | P0 | Implemented as `g_experiments/exp015` (reuses `g_model/exp009` checkpoints read-only, own outputs dir, `sbatch singularity_run.sh`); pipeline verified end-to-end on 3090 with a throwaway checkpoint; needs a real cloud run against exp009's actual checkpoints for a real curve + public score |
+| G-027b | g_experiments | — | Input feature: per-satellite IR->rain empirical curve (`bt_rain_response.csv`) evaluated at coldest IR band, as auxiliary input channel | P1 | Not started |
+| G-028 | g_experiments | — | Architecture: dilated-conv bottleneck (dilation 2,4) instead of extra downsampling in `enc2`/`enc3` | P2 | Not started; exploratory, motivated by `radial_power_spectrum.csv` (81% of target power at wavenumber 1-2) |
+| G-029 | g_experiments | — | Loss: radial-power-spectrum auxiliary term comparing predicted vs. target spectra (reuses `l_eda/exp002` FFT code) | P3 | Not started; run only after G-026/G-027 to keep comparisons readable |
+
+G-023 (solar/visible-brightness feature) is updated, not replaced: `doc/research_survey_v2.md` §5
+adds a precedent for day/twilight/night **regime gating** (e.g. a 3-bucket one-hot or FiLM-style
+conditioning) rather than assuming a single continuous solar-zenith-angle channel captures the effect
+linearly enough for a from-scratch ~2M-param CNN trained on ~20 episodes. Compare both variants via
+OOF on `outputs/l_eda/exp002/oof_daynight_conditional.csv`'s existing split when implementing G-023.
+
+### G-026 — exp015: multi-quantile amount head
+
+Add quantile output heads (τ ∈ {0.5, 0.9, 0.99}) to the amount branch of `two_head_compact_unet` /
+`satellite_adapter_two_head_unet`, trained with pinball loss plus a monotonicity constraint across
+heads (see `doc/research_survey_v2.md` §1 for the `Q-SRDRN`/`IncrementBound` reference this is
+modeled on), alongside the existing rain-probability head unchanged. This is the literature's largest
+measured effect size (18x extreme-event detection-rate gain in the source paper) and directly targets
+the 87%-of-error-budget mid/heavy-rain tail. Not a drop-in win: our metric is `tile_rmse`, which
+rewards the conditional mean, not a well-calibrated tail, so which quantile (or blend, e.g.
+`0.5*median + 0.5*p90`) actually minimizes `tile_rmse` is an open empirical question — OOF-sweep it,
+separately for the whole distribution and for the mid/heavy-rain subset
+(`doc/data_characteristics_review.md` §1.3 bins). Start from whichever of exp012/exp013 is winning by
+the time this is implemented; single-fold A/B before any 5-fold commitment.
+
+### G-027 — IR-to-rain calibration curve (a: post-processing, b: input feature)
+
+(a) Fit an isotonic (or piecewise-linear) OOF calibration curve mapping raw amount-head output to a
+calibrated value — same mechanism `oof_calibration.json` already uses for linear scale/bias in
+exp008+, just swap the fit method. Try on the current best submission before touching training;
+essentially free. (b) If (a) doesn't close the gap, add the per-satellite `bt_rain_response.csv`
+curve (already computed in `outputs/l_eda/exp002`) evaluated at each pixel's coldest-band IR value, as
+one extra input channel — mirrors the Weather4cast 2025 2nd-place solution's explicit
+BT->rainfall-rate transformation stage (`doc/research_survey_v2.md` §2). Both derived purely from
+distributed data.
+
+**(a) implementation (2026-07-10)**: `analyze_oof.py` (exp009/011/012/013, and now `exp015`) accumulates
+a fixed 95-bin pixel-value histogram of (pred, target) during the existing OOF forward pass (~52-76
+bins actually populated in practice), collapses each bin to (mean_pred, mean_target) weighted by
+pixel count, and fits `sklearn.isotonic.IsotonicRegression(y_min=0, increasing=True,
+out_of_bounds="clip")` on those points — cheap regardless of OOF pixel count, and consistent with
+the existing linear scale/bias fit also being a pooled-sum (not per-tile-weighted) estimate. The
+fitted knots serialize into `oof_calibration.json["isotonic"]["x"/"y"]` alongside the untouched
+linear fields. `inference.py` gained `apply_isotonic_curve()` (torch `searchsorted`-based monotonic
+piecewise-linear interpolation, verified bit-close to `sklearn`'s own `.predict()`) and a
+`postprocess.calibration_mode: "linear"|"isotonic"` config switch (default `"linear"` in
+exp009/011/012/013 so no existing run's behavior changes silently; default `"isotonic"` in exp015,
+since that's the whole point of that experiment); requesting `"isotonic"` without a fitted curve
+present falls back to linear with a warning.
+
+**Where it actually runs**: rather than re-running `analyze_oof.py`/`inference.py` inside exp009's
+own folder (which would overwrite exp009's real `outputs/analysis/exp009/oof_calibration.json` and
+mix a diagnostic-only run into its history), the isotonic-calibration *run* lives in its own
+`g_experiments/exp015` — same "reuse another experiment's checkpoints read-only" pattern exp008
+already established for exp004 (`paths.source_model_dir: ../../g_model/exp009`, own
+`output_dir`/`analysis_dir`/`submission_zip` under `.../exp015`). `exp015` trains nothing; its
+`run.sh`/`singularity_run.sh` support `analyze` / `infer` / `submit` / `submit_calibrated` stages,
+submittable via `sbatch singularity_run.sh` per the standard HPC convention.
+
+Verified: synthetic-data unit test (recovers a known 4x heavy-rain-underestimation curve, `torch`
+output matches `sklearn` exactly), and a real end-to-end run of `exp015`'s actual shipped
+`run.sh analyze` / `run.sh submit_calibrated` stages on the local 3090 against a throwaway
+1-epoch/512-sample checkpoint (standing in for exp009's real one via `SOURCE_MODEL_DIR` override) —
+produced a valid monotonic `oof_calibration.json` and an `inference.py` run with
+`calibration_mode: isotonic` whose raw calibrated values genuinely diverge from linear mode (max
+diff 0.036 on this undertrained checkpoint). Not yet run against exp009's actual cloud checkpoints,
+so no real curve or public score exists yet — next step is `sbatch singularity_run.sh` (default
+stage `submit_calibrated`) in `g_experiments/exp015` on the cluster where exp009's real checkpoints
+live, then compare OOF `tile_rmse` uncalibrated vs. linear vs. isotonic (`outputs/analysis/exp015/`)
+before deciding whether to ship the resulting `exp015_submission.zip` — likely stacked with exp014's
+tile-overlap patch applied last, since that overwrites with real GPM truth unaffected by
+calibration.
+
+### G-028 — dilated-conv bottleneck (exploratory)
+
+`outputs/l_eda/exp002`'s `radial_power_spectrum.csv` shows ~81% of target spatial-frequency power at
+wavenumber 1-2 (20-41px wavelength) — the network's job is mostly large-scale patterns, not fine
+texture, which argues against more downsampling and mildly favors growing receptive field without
+discarding resolution. Single-fold ablation: replace `enc2`/`enc3`'s `avg_pool2d` downsampling with
+dilated convolutions (dilation 2, 4) at fixed resolution, same channel widths, same
+data/loss/architecture as the current fold-0 champion. Compare OOF `tile_rmse` overall and on the
+mid/heavy-rain-tile subset specifically. No measured effect size from directly analogous work exists
+yet (unlike G-026/G-027) — this is a plausible-but-unproven architectural bet.
+
+### G-029 — radial-power-spectrum auxiliary loss (exploratory)
+
+Add a small auxiliary loss term comparing the radial power spectrum of prediction vs. target on the
+amount head's output, reusing the existing `radial_power_spectrum` FFT code from `l_eda/exp002`
+(motivated by the "double penalty" MSE-blur diagnosis in `doc/research_survey_v2.md` §4). Run only
+after G-026/G-027 are evaluated — it targets the same blur/tail symptom via a different mechanism, and
+stacking three simultaneous untested changes would make the comparison unreadable. Our tile is small
+enough that a full wavelet-decomposition approach (WADEPre) likely has too little scale range to pay
+off, so this stays scoped to the simpler radial-power-spectrum term, not a wavelet loss.
 
 ### G-016 — exp012: successor-row + satellite-adapter two-head
 

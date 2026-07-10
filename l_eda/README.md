@@ -8,6 +8,7 @@
 | Exp | Theme | Status |
 | --- | --- | --- |
 | exp001 | OpenCV/NumPy image-processing EDA: morphology, parallax, motion, texture, train/eval shift | Ready |
+| exp002 | Pixel-level EDA round 2: tile adjacency/overlap (→ `doc/tile_overlap_discovery.md`), IR→rain lag, GPM autocorr, BT-rain response, band health, quantization, spectra, OOF day/night join | Run — 3 eval↔train tile overlaps confirmed |
 
 ## Run
 

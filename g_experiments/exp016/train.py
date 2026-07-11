@@ -204,6 +204,21 @@ def main() -> None:
     scaler = make_grad_scaler(enabled=bool(config["train"]["amp"]))
     loss_fn = build_loss(config)
     epochs = int(config["train"]["epochs"])
+    scheduler_cfg = config.get("scheduler", {})
+    scheduler = None
+    if scheduler_cfg.get("name", "none") == "reduce_on_plateau":
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=float(scheduler_cfg.get("factor", 0.3)),
+            patience=int(scheduler_cfg.get("patience", 4)),
+            min_lr=float(scheduler_cfg.get("min_lr", 1e-5)),
+        )
+    early_patience = int(config["train"].get("early_stopping_patience", 0))
+    early_min_delta = float(config["train"].get("early_stopping_min_delta", 0.0))
+    early_best = float("inf")
+    epochs_without_improvement = 0
+    stopped_early = False
     clip_min = float(config["model"]["clip_min"])
     selection_metric = metric_key(config)
     best_metric = float("inf")
@@ -309,6 +324,14 @@ def main() -> None:
             }
             torch.save(checkpoint, checkpoint_path)
 
+        if scheduler is not None:
+            scheduler.step(current_metric)
+        if current_metric < early_best - early_min_delta:
+            early_best = current_metric
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
+
         with training_log_path.open("a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=training_log_fields)
             writer.writerow(
@@ -331,6 +354,15 @@ def main() -> None:
                 }
             )
 
+        if early_patience > 0 and epochs_without_improvement >= early_patience:
+            stopped_early = True
+            print(
+                f"early stopping at epoch={epoch}: no improvement > {early_min_delta} "
+                f"for {early_patience} epochs",
+                flush=True,
+            )
+            break
+
     metrics_path.write_text(
         json.dumps(
             {
@@ -341,6 +373,8 @@ def main() -> None:
                 "best_tile_rmse": best_tile_rmse,
                 "best_metric": best_metric,
                 "selection_metric": selection_metric,
+                "stopped_early": stopped_early,
+                "epochs_completed": len(history),
                 "train_rows_used": len(train_ds),
                 "valid_rows_used": len(valid_ds),
                 "torch_version": torch.__version__,

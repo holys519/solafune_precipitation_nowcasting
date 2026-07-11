@@ -1,6 +1,6 @@
 # Experiment Plan
 
-*Last updated: 2026-07-10*
+*Last updated: 2026-07-12*
 
 ## Competition
 
@@ -45,6 +45,11 @@
 | exp018 | Within-tile localization (G-032) | Break the 0.677 tile-mean oracle wall (`doc/discussion_insights.md` §1): internal high-res processing (upsample input to 128×128, 4-level encoder, native 41×41 output), auxiliary wet-mask segmentation head, multi-scale (1x/2x/4x pooled) MSE for displacement tolerance ("blurred-but-well-placed beats sharp-but-misplaced", σ=2px-blurred truth scores 0.38). New OOF diagnostic: per-tile spatial correlation & wet-mask IoU | Not started |
 | exp019 | t+0-frame-centric temporal design (G-033) | Make the successor-row t+0 frame (available eval-side 99.4%, information peak is exactly at t) the primary input frame instead of one of 6 equal channels-stacked frames; add |Δ| change-magnitude channels around t (measured Spearman +0.69 vs rain; optical flow measured useless); optional train-time-only future-frame auxiliary prediction head for the 10-min advection gap | Not started |
 | exp020 | Harvest: seeds + 6-way TTA + stacked post-processing (G-034) | Best config from exp016-019 × 3 seeds × 5 folds, 6-way TTA (add rot90/180/270 to current flips), OOF-weighted ensemble, isotonic calibration (exp015 machinery), drizzle cut, then exp014 overlap patch applied last. CV metric weighted by test satellite mix (him 39%/met 39%/goes 22%) | Not started |
+| exp021 | exp016/017 completion | Resume fold4, regenerate five-fold OOF/submissions, and save comparison outputs | Implemented; cloud run pending |
+| exp022 | exp017 feature ablation | Isolated full/engineered/canonical arms without checkpoint collisions | Implemented; cloud run pending |
+| exp023 | exp016 serving diagnostics | Compare mean/median serving and calibration without training | Implemented; cloud run pending |
+| exp024 | Prediction blend | Build weighted exp009/016/017 blends without training | Implemented; cloud run pending |
+| exp025 | Multi-seed variance | Configurable source, seeds, folds, and isolated checkpoints | Implemented; run after winner selection |
 
 See `doc/task_tickets.md` for the full ticket list, including which items are `g_experiments`-only
 (A100x2/x4 scaled configs, DDP migration — these are hardware-scaling concerns and are never
@@ -59,3 +64,4 @@ See `doc/task_tickets.md` for the full ticket list, including which items are `g
 | 2026-07-08 | exp008-exp011 | code implemented | Postprocess, successor frames, data cleanup, and adapter-two-head variants are ready to run |
 | 2026-07-10 | exp014 | public RMSE 0.6968727727408199 | New best public score. Tile-overlap GPM copy patch applied on top of exp009 submission confirms the leak found in `doc/tile_overlap_discovery.md` is real and effective, not just correct on synthetic data |
 | 2026-07-10 | exp015 | public RMSE 0.7096658388930687 | Isotonic OOF calibration (G-027a) improves over exp009 base by 0.0056780510175330. An offline tile-peak proxy check suggested almost no correction of heavy-rain amplitude underestimation, yet the real score improved anyway -- likely from damping over-confident mid/high false-alarm pixels. Not yet combined with exp014's tile-overlap patch |
+| 2026-07-12 | exp016/017 | fold0-3 interim comparison | exp016 mean tile_rmse 0.6320 vs exp017 0.6284; exp021-exp025 added for completion, ablation, diagnostics, blending, and seed variance. |

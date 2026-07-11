@@ -6,6 +6,7 @@
 #   bash run.sh                          # config.yaml, train folds 0-4 -> analyze -> submit
 #   bash run.sh config.yaml all          # train folds 0-4 only
 #   bash run.sh config.yaml submit       # analyze existing checkpoints -> submit
+#   bash run.sh config.yaml fold4_submit # train fold 4 -> analyze -> infer -> submit
 #   bash run.sh config_a100x2.yaml 3     # A100x2 profile, fold 3
 
 set -euo pipefail
@@ -118,6 +119,11 @@ elif [ "$FOLD" = "all_submit" ]; then
   for f in 0 1 2 3 4; do
     run_fold "$f"
   done
+  run_analysis
+  run_inference
+  run_submission
+elif [ "$FOLD" = "fold4_submit" ]; then
+  run_fold 4
   run_analysis
   run_inference
   run_submission

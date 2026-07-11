@@ -1,0 +1,237 @@
++ '[' -f /etc/profile.d/modules.sh ']'
++ source /etc/profile.d/modules.sh
+++ '[' -n /bin/bash ']'
+++ shell=bash
+++ '[' -f /usr/local/Modules/init/bash ']'
+++ . /usr/local/Modules/init/bash
++++ unset _mlre _mlIFS _mlshdbg
++++ '[' 0 = 1 ']'
++++ '[' -n x ']'
++++ _mlIFS=' 	
+'
++++ IFS=' '
++++ '[' -n '' ']'
+++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash autoinit
++++ eval 'module() {
+   unset _mlre _mlIFS _mlshdbg;
+   if [ "${MODULES_SILENT_SHELL_DEBUG:-0}" = '\''1'\'' ]; then
+      case "$-" in
+         *v*x*) set +vx; _mlshdbg='\''vx'\'' ;;
+         *v*) set +v; _mlshdbg='\''v'\'' ;;
+         *x*) set +x; _mlshdbg='\''x'\'' ;;
+         *) _mlshdbg='\'''\'' ;;
+      esac;
+   fi;
+   if [ -n "${IFS+x}" ]; then
+      _mlIFS=$IFS;
+   fi;
+   IFS='\'' '\'';
+   for _mlv in ${MODULES_RUN_QUARANTINE:-}; do
+      if [ "${_mlv}" = "${_mlv##*[!A-Za-z0-9_]}" -a "${_mlv}" = "${_mlv#[0-9]}" ]; then
+         if [ -n "`eval '\''echo ${'\''$_mlv'\''+x}'\''`" ]; then
+            _mlre="${_mlre:-}${_mlv}_modquar='\''`eval '\''echo ${'\''$_mlv'\''}'\''`'\'' ";
+         fi;
+         _mlrv="MODULES_RUNENV_${_mlv}";
+         _mlre="${_mlre:-}${_mlv}='\''`eval '\''echo ${'\''$_mlrv'\'':-}'\''`'\'' ";
+      fi;
+   done;
+   if [ -n "${_mlre:-}" ]; then
+      eval `eval ${_mlre}/usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash '\''"$@"'\''`;
+   else
+      eval `/usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash "$@"`;
+   fi;
+   _mlstatus=$?;
+   if [ -n "${_mlIFS+x}" ]; then
+      IFS=$_mlIFS;
+   else
+      unset IFS;
+   fi;
+   if [ -n "${_mlshdbg:-}" ]; then
+      set -$_mlshdbg;
+   fi;
+   unset _mlre _mlv _mlrv _mlIFS _mlshdbg;
+   return $_mlstatus;
+};
+MODULES_CMD=/usr/local/Modules/libexec/modulecmd.tcl; export MODULES_CMD;
+LOADEDMODULES=; export LOADEDMODULES;
+MODULESHOME=/usr/local/Modules; export MODULESHOME;
+MODULEPATH=; export MODULEPATH;
+test 0;'
+++++ MODULES_CMD=/usr/local/Modules/libexec/modulecmd.tcl
+++++ export MODULES_CMD
+++++ LOADEDMODULES=
+++++ export LOADEDMODULES
+++++ MODULESHOME=/usr/local/Modules
+++++ export MODULESHOME
+++++ MODULEPATH=
+++++ export MODULEPATH
+++++ test 0
++++ '[' -n x ']'
++++ IFS=' 	
+'
++++ unset _mlIFS
++++ unset _mlre _mlv _mlrv
++++ '[' 0 = 1 ']'
++++ '[' -t 2 ']'
++++ export -f module
++++ export -f switchml
++++ ENV=/usr/local/Modules/init/profile.sh
++++ export ENV
++++ BASH_ENV=/usr/local/Modules/init/bash
++++ export BASH_ENV
++++ '[' 5 -ge 3 ']'
++++ [[ ehuxB =~ i ]]
++++ [[ ! :/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts: =~ :/usr/local/Modules/bin: ]]
++++ PATH=/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts
++++ export PATH
+++++ manpath
++++ manpath=/usr/local/Modules/share/man:/usr/local/man:/usr/local/share/man:/usr/share/man:/usr/man
++++ [[ ! :/usr/local/Modules/share/man:/usr/local/man:/usr/local/share/man:/usr/share/man:/usr/man: =~ :/usr/local/Modules/share/man: ]]
++++ '[' -n '' ']'
+++ export MODULE_VERSION=4.1.4
+++ MODULE_VERSION=4.1.4
+++ module use --append /apps/Modules/modulefiles/mpi
+++ unset _mlre _mlIFS _mlshdbg
+++ '[' 0 = 1 ']'
+++ '[' -n x ']'
+++ _mlIFS=' 	
+'
+++ IFS=' '
+++ '[' -n '' ']'
++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash use --append /apps/Modules/modulefiles/mpi
+++ eval 'MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1;' export 'MODULEPATH_modshare;
+MODULEPATH=/apps/Modules/modulefiles/mpi;' export 'MODULEPATH;
+test' '0;'
++++ MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1
++++ export MODULEPATH_modshare
++++ MODULEPATH=/apps/Modules/modulefiles/mpi
++++ export MODULEPATH
++++ test 0
+++ _mlstatus=0
+++ '[' -n x ']'
+++ IFS=' 	
+'
+++ '[' -n '' ']'
+++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
+++ return 0
+++ module use --append /apps/Modules/modulefiles/runtimes
+++ unset _mlre _mlIFS _mlshdbg
+++ '[' 0 = 1 ']'
+++ '[' -n x ']'
+++ _mlIFS=' 	
+'
+++ IFS=' '
+++ '[' -n '' ']'
++++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash use --append /apps/Modules/modulefiles/runtimes
+++ eval 'MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1:/apps/Modules/modulefiles/runtimes:1;' export 'MODULEPATH_modshare;
+MODULEPATH=/apps/Modules/modulefiles/mpi:/apps/Modules/modulefiles/runtimes;' export 'MODULEPATH;
+test' '0;'
++++ MODULEPATH_modshare=/apps/Modules/modulefiles/mpi:1:/apps/Modules/modulefiles/runtimes:1
++++ export MODULEPATH_modshare
++++ MODULEPATH=/apps/Modules/modulefiles/mpi:/apps/Modules/modulefiles/runtimes
++++ export MODULEPATH
++++ test 0
+++ _mlstatus=0
+++ '[' -n x ']'
+++ IFS=' 	
+'
+++ '[' -n '' ']'
+++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
+++ return 0
++ '[' -n /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp017 ']'
++ '[' -f /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp017/run.sh ']'
++ SCRIPT_DIR=/group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp017
+++ cd /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp017/../..
+++ pwd
++ PROJECT_DIR=/group/project143/yamamoto/solafune_precipitation_nowcasting
++ CONFIG=config_engineered_only.yaml
++ FOLD=0
++ '[' config_engineered_only.yaml = all ']'
++ '[' config_engineered_only.yaml = all_submit ']'
++ '[' config_engineered_only.yaml = analyze ']'
++ '[' config_engineered_only.yaml = analysis ']'
++ '[' config_engineered_only.yaml = submit ']'
++ '[' config_engineered_only.yaml = submission ']'
++ '[' config_engineered_only.yaml = submit_calibrated ']'
++ '[' config_engineered_only.yaml = infer ']'
++ '[' config_engineered_only.yaml = inference ']'
++ [[ config_engineered_only.yaml =~ ^[0-9]+$ ]]
++ CONTAINER_FOLDER=/group/project143/common/containers
++ CONTAINER_NAME=kaggle-gpu-images-python-v163.sif
++ CONTAINER_PATH=/group/project143/common/containers/kaggle-gpu-images-python-v163.sif
++ '[' '!' -r /group/project143/common/containers/kaggle-gpu-images-python-v163.sif ']'
++ module load singularity/3.5.3
++ unset _mlre _mlIFS _mlshdbg
++ '[' 0 = 1 ']'
++ '[' -n x ']'
++ _mlIFS=' 	
+'
++ IFS=' '
++ '[' -n '' ']'
+++ /usr/bin/tclsh /usr/local/Modules/libexec/modulecmd.tcl bash load singularity/3.5.3
++ eval 'LD_LIBRARY_PATH=/apps/singularity/3.5.3/lib;' export 'LD_LIBRARY_PATH;
+CPATH=/apps/singularity/3.5.3/include;' export 'CPATH;
+LIBRARY_PATH=/apps/singularity/3.5.3/lib;' export 'LIBRARY_PATH;
+MANPATH=/apps/singularity/3.5.3/share/man;' export 'MANPATH;
+_LMFILES_=/apps/Modules/modulefiles/runtimes/singularity/3.5.3;' export '_LMFILES_;
+LOADEDMODULES=singularity/3.5.3;' export 'LOADEDMODULES;
+LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1;' export 'LIBRARY_PATH_modshare;
+MANPATH_modshare=/apps/singularity/3.5.3/share/man:1;' export 'MANPATH_modshare;
+LD_LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1;' export 'LD_LIBRARY_PATH_modshare;
+CPATH_modshare=/apps/singularity/3.5.3/include:1;' export 'CPATH_modshare;
+_LMFILES__modshare=/apps/Modules/modulefiles/runtimes/singularity/3.5.3:1;' export '_LMFILES__modshare;
+LOADEDMODULES_modshare=singularity/3.5.3:1;' export 'LOADEDMODULES_modshare;
+PATH=/apps/singularity/3.5.3/bin:/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts;' export 'PATH;
+SINGULARITY_ROOT=/apps/singularity/3.5.3;' export 'SINGULARITY_ROOT;
+PATH_modshare=/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts:1:/usr/bin:1:/apps/singularity/3.5.3/bin:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:1:/usr/local/bin:1:/home/ba110396/.local/bin:1:/bin:1:/snap/bin:1:/usr/local/Modules/bin:1:/sbin:1:/usr/sbin:1:/usr/games:1:/usr/local/sbin:1:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:1:/usr/local/games:1;' export 'PATH_modshare;
+test' '0;'
+++ LD_LIBRARY_PATH=/apps/singularity/3.5.3/lib
+++ export LD_LIBRARY_PATH
+++ CPATH=/apps/singularity/3.5.3/include
+++ export CPATH
+++ LIBRARY_PATH=/apps/singularity/3.5.3/lib
+++ export LIBRARY_PATH
+++ MANPATH=/apps/singularity/3.5.3/share/man
+++ export MANPATH
+++ _LMFILES_=/apps/Modules/modulefiles/runtimes/singularity/3.5.3
+++ export _LMFILES_
+++ LOADEDMODULES=singularity/3.5.3
+++ export LOADEDMODULES
+++ LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1
+++ export LIBRARY_PATH_modshare
+++ MANPATH_modshare=/apps/singularity/3.5.3/share/man:1
+++ export MANPATH_modshare
+++ LD_LIBRARY_PATH_modshare=/apps/singularity/3.5.3/lib:1
+++ export LD_LIBRARY_PATH_modshare
+++ CPATH_modshare=/apps/singularity/3.5.3/include:1
+++ export CPATH_modshare
+++ _LMFILES__modshare=/apps/Modules/modulefiles/runtimes/singularity/3.5.3:1
+++ export _LMFILES__modshare
+++ LOADEDMODULES_modshare=singularity/3.5.3:1
+++ export LOADEDMODULES_modshare
+++ PATH=/apps/singularity/3.5.3/bin:/usr/local/Modules/bin:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:/home/ba110396/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts
+++ export PATH
+++ SINGULARITY_ROOT=/apps/singularity/3.5.3
+++ export SINGULARITY_ROOT
+++ PATH_modshare=/home/ba110396/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/scripts/noConfigScripts:1:/usr/bin:1:/apps/singularity/3.5.3/bin:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:1:/usr/local/bin:1:/home/ba110396/.local/bin:1:/bin:1:/snap/bin:1:/usr/local/Modules/bin:1:/sbin:1:/usr/sbin:1:/usr/games:1:/usr/local/sbin:1:/home/ba110396/.vscode-server/cli/servers/Stable-7e7950df89d055b5a378379db9ee14290772148a/server/bin/remote-cli:1:/home/ba110396/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:1:/usr/local/games:1
+++ export PATH_modshare
+++ test 0
++ _mlstatus=0
++ '[' -n x ']'
++ IFS=' 	
+'
++ '[' -n '' ']'
++ unset _mlre _mlv _mlrv _mlIFS _mlshdbg
++ return 0
++ echo ==========================================
++ echo g_experiments/exp017
++ echo ==========================================
++ echo 'Container: /group/project143/common/containers/kaggle-gpu-images-python-v163.sif'
++ echo 'Project:   /group/project143/yamamoto/solafune_precipitation_nowcasting'
++ echo 'Config:    config_engineered_only.yaml'
++ echo 'Fold:      0'
++ SINGULARITY_ARGS=(--nv --home "$PROJECT_DIR" --bind "$PROJECT_DIR:$PROJECT_DIR")
++ '[' -n 3925844 ']'
++ '[' -d /local/job/3925844 ']'
++ SINGULARITY_ARGS+=(--bind "/local/job/${SLURM_JOB_ID}:/local/job/${SLURM_JOB_ID}")
++ singularity exec --nv --home /group/project143/yamamoto/solafune_precipitation_nowcasting --bind /group/project143/yamamoto/solafune_precipitation_nowcasting:/group/project143/yamamoto/solafune_precipitation_nowcasting --bind /local/job/3925844:/local/job/3925844 /group/project143/common/containers/kaggle-gpu-images-python-v163.sif env PYTHON=python3 bash /group/project143/yamamoto/solafune_precipitation_nowcasting/g_experiments/exp017/run.sh config_engineered_only.yaml 0

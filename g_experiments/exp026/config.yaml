@@ -1,0 +1,21 @@
+experiment:
+  name: exp026
+  description: "Exp026: apply exp014 tile-overlap GPM patch to the exp024 equal 016+017 blend (current LB best 0.69193)"
+  seed: 42
+
+# NOTE: this config is consumed by ../exp014/apply_overlap.py, so relative paths
+# below resolve against g_experiments/exp014/ (its SCRIPT_DIR), not exp026/.
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+
+overlap:
+  pairs_table: overlap_pairs.csv
+  min_agreement: 0.0
+
+paths:
+  source_submission_dir: ../../outputs/submissions/exp024/equal_016_017
+  output_dir: ../../outputs/submissions/exp026
+  submission_zip: ../../outputs/submissions/exp026_submission.zip

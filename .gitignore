@@ -60,6 +60,7 @@ g_experiments/*/output/
 g_experiments/*/wandb/
 
 # Scheduler and runtime logs
+slurm-*.err
 slurm-*.out
 slurm-*.log
 extract_scores_*.log

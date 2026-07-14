@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import zipfile
+import argparse
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +27,10 @@ def resolve_path(path: str) -> Path:
 
 
 def main() -> None:
-    config = load_config(SCRIPT_DIR / "config.yaml")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default=str(SCRIPT_DIR / "config.yaml"))
+    args = parser.parse_args()
+    config = load_config(Path(args.config))
     output_dir = resolve_path(config["paths"]["output_dir"])
     zip_path = resolve_path(config["paths"]["submission_zip"])
     csv_path = output_dir / "evaluation_target.csv"

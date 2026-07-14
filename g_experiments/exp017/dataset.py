@@ -58,6 +58,9 @@ def features_from_config(config: dict) -> dict[str, bool]:
     return {
         "canonical_bands": bool(features_cfg.get("canonical_bands", False)),
         "engineered": bool(features_cfg.get("engineered", False)),
+        "temporal_abs": bool(features_cfg.get("temporal_abs", False)),
+        "target_time_first": bool(features_cfg.get("target_time_first", False)),
+        "ir_rain_proxy": bool(features_cfg.get("ir_rain_proxy", False)),
     }
 
 
@@ -67,11 +70,15 @@ def channels_per_frame(satellite_channels: int, features: dict[str, bool]) -> in
         extra += len(CANONICAL_ORDER)
     if features.get("engineered"):
         extra += 3
+    if features.get("ir_rain_proxy"):
+        extra += 1
     return satellite_channels + extra
 
 
 def channels_per_row(features: dict[str, bool]) -> int:
-    return 2 if features.get("engineered") else 0
+    if not features.get("engineered"):
+        return 0
+    return 2 + int(features.get("temporal_abs", False))
 
 
 def expected_in_channels(
@@ -210,6 +217,20 @@ def frame_engineered_channels(raw: torch.Tensor, satellite: str) -> torch.Tensor
     return torch.stack([ratio, ir85_minus_w, wv_minus_w], dim=0)
 
 
+def ir_rain_proxy_channel(raw: torch.Tensor, satellite: str) -> torch.Tensor:
+    """Bounded satellite-aware cold-cloud proxy derived from the IR-window band.
+
+    Raw brightness values increase with brightness temperature in this dataset.  The
+    per-satellite anchors avoid pretending that the three sensors share one radiometric
+    response; the output is a dimensionless [0, 1] feature for an isolated ablation.
+    """
+    cold_anchor = {"goes": 105.0, "himawari": 105.0, "meteosat": 95.0}[satellite]
+    warm_anchor = {"goes": 190.0, "himawari": 190.0, "meteosat": 180.0}[satellite]
+    win = raw[KEY_BANDS[satellite]["win"]]
+    proxy = ((warm_anchor - win) / (warm_anchor - cold_anchor)).clamp(0.0, 1.0)
+    return proxy.unsqueeze(0)
+
+
 def build_frame_tensor(
     raw: torch.Tensor,
     n_chan: int,
@@ -223,6 +244,8 @@ def build_frame_tensor(
         parts.append(parts[0][indices])
     if features.get("engineered"):
         parts.append(frame_engineered_channels(raw, satellite))
+    if features.get("ir_rain_proxy"):
+        parts.append(ir_rain_proxy_channel(raw, satellite))
     return torch.cat(parts, dim=0)
 
 
@@ -317,7 +340,10 @@ class PrecipDataset(Dataset):
         else:
             is_day = 0.0
         day_flag = torch.full((1, *self.target_size), is_day, dtype=torch.float32)
-        return [temporal, day_flag]
+        channels = [temporal, day_flag]
+        if self.features.get("temporal_abs"):
+            channels.append(temporal.abs())
+        return channels
 
     def _observation_tensors(
         self, row: dict[str, str] | None, expected_satellite: str
@@ -371,6 +397,15 @@ class PrecipDataset(Dataset):
             maps.extend(context_maps)
             masks.extend(context_masks)
             row_features.extend(context_row_features)
+
+        if self.features.get("target_time_first") and self.context_rows > 1:
+            # The newest frame of the successor row is the closest available observation
+            # to target time.  Put it first so it is not buried among six symmetric slots.
+            per_row = self.max_observations
+            primary = per_row * (self.context_rows - 1) + (per_row - 1)
+            order = [primary] + [i for i in range(len(maps)) if i != primary]
+            maps = [maps[i] for i in order]
+            masks = [masks[i] for i in order]
 
         satellite_maps = []
         for sat in SATELLITES:

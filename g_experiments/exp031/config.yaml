@@ -1,0 +1,11 @@
+experiment: {name: exp031, description: "Low-weight focal and Tversky rain-mask auxiliary loss", seed: 42}
+data: {train_csv: ../../data/train_dataset/train_dataset.csv, evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv, train_dir: ../../data/train_dataset, evaluation_dir: ../../data/evaluation_dataset, sample_submission_dir: ../../data/sample_submission, max_observations: 3, context_rows: 2, satellite_channels: 16, target_height: 41, target_width: 41}
+features: {canonical_bands: true, engineered: true}
+split: {strategy: group_kfold, n_splits: 5, fold: 0, max_train_samples: null, max_valid_samples: null}
+train: {batch_size: 128, epochs: 100, lr: 0.001, weight_decay: 0.0001, num_workers: 12, amp: true, grad_clip_norm: 1.0, augment: true}
+model: {architecture: two_head_compact_unet, in_channels: 163, base_channels: 48, clip_min: 0.0}
+loss: {name: focal_tversky_rain, rain_threshold: 0.0, pos_weight: 2.0, bce_weight: 0.1, bce_pos_weight: 3.0, amount_weight: 0.5, prediction_weight: 1.0, focal_weight: 0.05, focal_gamma: 2.0, tversky_weight: 0.05, tversky_alpha: 0.3, tversky_beta: 0.7}
+tta: {enabled: true, flip: true}
+metric: {selection: tile_rmse}
+postprocess: {use_oof_calibration: false, calibration_mode: linear, rain_prob_threshold: 0.0, value_threshold: 0.10, temporal_smoothing: {enabled: false}, calibration_path: ../../outputs/analysis/exp031/oof_calibration.json}
+paths: {model_dir: ../../g_model/exp031, output_dir: ../../outputs/submissions/exp031, submission_zip: ../../outputs/submissions/exp031_submission.zip, analysis_dir: ../../outputs/analysis/exp031, norm_stats: norm_stats.json}

@@ -69,11 +69,37 @@ class TwoHeadRainLoss(nn.Module):
         return self.bce_weight * bce + self.amount_weight * amount_loss + self.prediction_weight * prediction_loss
 
 
+class FocalTverskyRainLoss(TwoHeadRainLoss):
+    """Control regression losses plus calibrated, low-weight spatial occurrence auxiliaries."""
+
+    def __init__(self, focal_weight: float = 0.05, tversky_weight: float = 0.05,
+                 focal_gamma: float = 2.0, tversky_alpha: float = 0.3,
+                 tversky_beta: float = 0.7, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.focal_weight, self.tversky_weight = focal_weight, tversky_weight
+        self.focal_gamma, self.tversky_alpha, self.tversky_beta = focal_gamma, tversky_alpha, tversky_beta
+
+    def forward(self, output, target):
+        base = super().forward(output, target)
+        if not isinstance(output, dict):
+            return base
+        truth = (target > self.rain_threshold).float()
+        prob = output["rain_prob"].clamp(1e-5, 1.0 - 1e-5)
+        pt = torch.where(truth > 0, prob, 1.0 - prob)
+        focal = (-(1.0 - pt).pow(self.focal_gamma) * pt.log()).mean()
+        dims = (1, 2, 3)
+        tp = (prob * truth).sum(dims)
+        fp = (prob * (1.0 - truth)).sum(dims)
+        fn = ((1.0 - prob) * truth).sum(dims)
+        tversky = 1.0 - ((tp + 1.0) / (tp + self.tversky_alpha * fp + self.tversky_beta * fn + 1.0)).mean()
+        return base + self.focal_weight * focal + self.tversky_weight * tversky
+
+
 def build_loss(config: dict) -> nn.Module:
     loss_cfg = config.get("loss", {})
     name = loss_cfg.get("name", "weighted_mse")
-    if name == "two_head_rain":
-        return TwoHeadRainLoss(
+    if name in {"two_head_rain", "focal_tversky_rain"}:
+        kwargs = dict(
             rain_threshold=float(loss_cfg.get("rain_threshold", 0.0)),
             pos_weight=float(loss_cfg.get("pos_weight", 2.0)),
             bce_weight=float(loss_cfg.get("bce_weight", 0.1)),
@@ -81,4 +107,12 @@ def build_loss(config: dict) -> nn.Module:
             amount_weight=float(loss_cfg.get("amount_weight", 0.5)),
             prediction_weight=float(loss_cfg.get("prediction_weight", 1.0)),
         )
+        if name == "focal_tversky_rain":
+            return FocalTverskyRainLoss(
+                focal_weight=float(loss_cfg.get("focal_weight", 0.05)),
+                tversky_weight=float(loss_cfg.get("tversky_weight", 0.05)),
+                focal_gamma=float(loss_cfg.get("focal_gamma", 2.0)),
+                tversky_alpha=float(loss_cfg.get("tversky_alpha", 0.3)),
+                tversky_beta=float(loss_cfg.get("tversky_beta", 0.7)), **kwargs)
+        return TwoHeadRainLoss(**kwargs)
     return WeightedMSELoss(pos_weight=float(loss_cfg.get("pos_weight", 2.0)))

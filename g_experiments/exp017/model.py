@@ -19,14 +19,14 @@ from torch.nn import functional as F
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int) -> None:
+    def __init__(self, in_channels: int, out_channels: int, dilation: int = 1) -> None:
         super().__init__()
         groups = 8 if out_channels % 8 == 0 else 1
         self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
             nn.GroupNorm(groups, out_channels),
             nn.SiLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
             nn.GroupNorm(groups, out_channels),
             nn.SiLU(inplace=True),
         )
@@ -96,6 +96,37 @@ class TwoHeadCompactUNet(CompactUNet):
         }
 
 
+class DilatedTwoHeadCompactUNet(TwoHeadCompactUNet):
+    """Two-head control with a dilation-2/4 bottleneck and unchanged downsampling."""
+
+    def __init__(self, in_channels: int = 54, base_channels: int = 48) -> None:
+        super().__init__(in_channels=in_channels, base_channels=base_channels)
+        c = base_channels
+        self.bottleneck = nn.Sequential(ConvBlock(c * 4, c * 4, dilation=2), ConvBlock(c * 4, c * 4, dilation=4))
+
+
+class SatelliteConditionalTwoHeadUNet(CompactUNet):
+    """Shared spatial body with separate occurrence/amount heads per satellite."""
+
+    def __init__(self, in_channels: int = 54, base_channels: int = 48) -> None:
+        super().__init__(in_channels=in_channels, base_channels=base_channels)
+        c = base_channels
+        self.rain_heads = nn.ModuleList([nn.Conv2d(c, 1, 1) for _ in range(3)])
+        self.amount_heads = nn.ModuleList([nn.Conv2d(c, 1, 1) for _ in range(3)])
+
+    def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
+        features = self.forward_features(x)
+        satellite_weights = x[:, -3:, 0, 0]
+        rain_stack = torch.stack([head(features) for head in self.rain_heads], dim=1)
+        amount_stack = torch.stack([head(features) for head in self.amount_heads], dim=1)
+        weights = satellite_weights[:, :, None, None, None]
+        rain_logits = (rain_stack * weights).sum(dim=1)
+        rain_prob = torch.sigmoid(rain_logits)
+        rain_amount = F.softplus((amount_stack * weights).sum(dim=1))
+        return {"pred": rain_prob * rain_amount, "rain_logits": rain_logits,
+                "rain_prob": rain_prob, "rain_amount": rain_amount}
+
+
 class SMPUNet(nn.Module):
     """Thin wrapper so callers use the same forward()/output shape as CompactUNet."""
 
@@ -131,6 +162,10 @@ def build_model(config: dict) -> nn.Module:
         return CompactUNet(in_channels=in_channels, base_channels=int(model_cfg["base_channels"]))
     if architecture == "two_head_compact_unet":
         return TwoHeadCompactUNet(in_channels=in_channels, base_channels=int(model_cfg["base_channels"]))
+    if architecture == "dilated_two_head_compact_unet":
+        return DilatedTwoHeadCompactUNet(in_channels=in_channels, base_channels=int(model_cfg["base_channels"]))
+    if architecture == "satellite_conditional_two_head_unet":
+        return SatelliteConditionalTwoHeadUNet(in_channels=in_channels, base_channels=int(model_cfg["base_channels"]))
     if architecture == "smp_unet":
         return SMPUNet(
             in_channels=in_channels,

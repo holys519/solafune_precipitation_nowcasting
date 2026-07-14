@@ -25,10 +25,17 @@ targetはリサイズせず、入力特徴のみ128x128で処理してnative 41x
 sbatch singularity_run.sh config_highres_only.yaml 0
 sbatch singularity_run.sh config_highres_mask.yaml 0
 sbatch singularity_run.sh config.yaml 0
-sbatch singularity_run.sh config.yaml all_submit
 ```
 
-128x128処理はメモリ使用量が大きいため初期batch sizeは16。OOM時は8へ下げる。
+full 5-foldは、各foldを2 GPU・24時間の独立ジョブとして投入する。5 foldが全て成功した後、
+OOF解析・推論・submission作成ジョブが自動的に開始される。
+
+```bash
+bash submit_folds.sh config.yaml
+```
+
+batch sizeはglobal 128（2 GPU時は64/GPU）。batch size 16での実行ではA100 40 GBの
+使用量が約1.8 GiB/GPUだったため拡大した。OOM時は64へ下げる。
 
 ## Acceptance criteria
 

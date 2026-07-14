@@ -5,15 +5,15 @@
 #SBATCH --ntasks-per-node=2
 #SBATCH --gpus-per-node=2
 #SBATCH --cpus-per-task=16
-#SBATCH --time=720
+#SBATCH --time=1-00:00:00
 #SBATCH --output=slurm-exp018-%j.out
 #SBATCH --error=slurm-exp018-%j.err
 
-# exp018 on a Slurm cluster via Singularity.
+# exp018 single-fold worker on a Slurm cluster via Singularity.
 # Usage:
-#   sbatch singularity_run.sh                      # config.yaml, all_submit
-#   sbatch singularity_run.sh config_a100x2.yaml 2 # A100x2 profile, fold 2
-#   sbatch --ntasks=4 --ntasks-per-node=4 --gpus-per-node=4 --cpus-per-task=32 singularity_run.sh config_a100x4.yaml all
+#   bash submit_folds.sh config.yaml       # folds 0-4 as separate jobs, then submit
+#   sbatch singularity_run.sh config.yaml 2 # run only fold 2
+#   sbatch singularity_run.sh config.yaml submit
 
 set -euxo pipefail
 
@@ -28,7 +28,7 @@ else
 fi
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CONFIG="${1:-config.yaml}"
-FOLD="${2:-all_submit}"
+FOLD="${2:-}"
 
 if [ "$CONFIG" = "all" ] || [ "$CONFIG" = "all_submit" ] || [ "$CONFIG" = "analyze" ] || \
    [ "$CONFIG" = "analysis" ] || [ "$CONFIG" = "submit" ] || [ "$CONFIG" = "submission" ] || \
@@ -36,6 +36,18 @@ if [ "$CONFIG" = "all" ] || [ "$CONFIG" = "all_submit" ] || [ "$CONFIG" = "analy
    [[ "$CONFIG" =~ ^[0-9]+$ ]]; then
   FOLD="$CONFIG"
   CONFIG="config.yaml"
+fi
+
+if [ -z "$FOLD" ]; then
+  echo "ERROR: Specify one fold (0-4) or a post-training action."
+  echo "For the full pipeline, run: bash $SCRIPT_DIR/submit_folds.sh $CONFIG"
+  exit 2
+fi
+
+if [ "$FOLD" = "all" ] || [ "$FOLD" = "all_submit" ]; then
+  echo "ERROR: $FOLD would train all folds serially in one 24-hour job."
+  echo "Run each fold separately with: bash $SCRIPT_DIR/submit_folds.sh $CONFIG"
+  exit 2
 fi
 
 CONTAINER_FOLDER="${CONTAINER_FOLDER:-/group/project143/common/containers}"

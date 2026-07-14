@@ -26,7 +26,8 @@ split:
   max_valid_samples: null
 
 train:
-  batch_size: 16
+  # Global batch size. With two GPUs DataParallel processes 64 samples per GPU.
+  batch_size: 128
   epochs: 100
   lr: 0.001
   weight_decay: 0.0001

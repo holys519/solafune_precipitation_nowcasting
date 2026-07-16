@@ -373,3 +373,22 @@ fold0単独は0.79へ持ち直したが序列は不変。ノイズ閾値は~0.00
    0.6919に肉薄しており、混合で改善する見込みが高い)
 3. 以降はexp033/034 READMEのadaptive分岐表に従う
 4. exp035の5-fold完走後は、その提出とexp033型ブレンドの再構成を優先
+
+## 10. exp033_w018_050 の結果と次アクション (2026-07-16 追記)
+
+`exp033_w018_050_patched.zip` = **0.671989922822016 (新ベスト、exp026比 −0.00266)**。
+exp018のブレンド混入が有効と確定。ブレンド曲線は w=0: 0.67465 → w=0.5: 0.67199 の2点のみで、
+最適wは未知。残り枠をハシゴの手探り (w=0.25/0.75/1.00) に使う前に、**OOFで最適混合を直接
+求める**:
+
+| アクション | 実装 | 状態 |
+| --- | --- | --- |
+| 考察実験: OOFブレンド最適化 | `g_eda/exp003` — exp016/017/018のOOF予測をnpzキャッシュし、2-way曲線 (0.05刻み)、3-way simplex全格子、**衛星別最適トリプル**、blur/threshold sweepを計算。`recommended_weights.json` を出力 | 投入済み (job 3935470) |
+| 提出実験: OOF最適重みブレンド | `g_experiments/exp036` — recommended_weights.jsonの `global_best` / `per_satellite` をeval予測に適用→patch→zip。手動 `--weights` 上書き可 | 実装済み。g_eda/exp003完了後に `sbatch singularity_run.sh --dry-run` → 本走 |
+
+**提出判断の分岐** (E-3ノイズ閾値 0.004-0.005 準拠):
+- OOFで `global_best` が ladder w=0.5 を >0.004 上回る → `exp036_global_patched` を提出
+- `per_satellite_composed` がさらに >0.004 上回る → per_satellite版も提出
+- 差が閾値未満 → exp033の `w018_075` で曲線右側を実測する方が情報量が多い
+- 併走: `exp034_thr_w018_000` (threshold軸の単離) は独立軸なので枠が余れば提出
+- exp035の5-fold完走後は、勝者を第4のブレンドメンバーとしてg_eda/exp003を再実行して収穫

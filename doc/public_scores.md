@@ -15,28 +15,29 @@ Sources:
 
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
-| 1 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | exp024 `equal_016_017` blend + exp014 overlap patch |
-| 2 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | 50% exp016 + 12.5%×4 exp017 seed family + patch — **worse than exp026**: seed checkpoints dilute quality |
-| 3 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | Equal 5-way blend + patch — worse still |
-| 4 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | Unpatched exp016/017 50/50 blend (best unpatched) |
-| 5 | exp018 | `exp018_submission.zip` | 0.6929495140301676 | 2026/07/16 12:57:23 | valid | High-res localization — **best single model**, consistent with best OOF 0.6093 |
-| 6 | exp024 | `exp024_blend_20_40_40.zip` | 0.693975964307325 | 2026/07/12 05:10:40 | valid | 20/40/40 exp009/016/017 |
-| 7 | exp024 | `exp024_equal_009_016_017.zip` | 0.6961199095679 | 2026/07/12 05:11:35 | valid | Adding exp009 to the blend hurts |
-| 8 | exp014 | `exp014_submission.zip` | 0.6968727727408199 | 2026/07/10 12:44:13 | valid | Tile-Overlap GPM Copy Patch on exp009 (G-022) |
-| 9 | exp016 | `exp016_submission.zip` | 0.6977629323809645 | 2026/07/11 11:23:41 | valid | Hurdle log-normal head |
-| 10 | exp017 | `exp017_submission.zip` | 0.6997414980565597 | 2026/07/11 11:24:23 | valid | Physics channels — LB order vs exp016 inverts their OOF order (Δ0.002 < noise) |
-| 11 | exp015 | `exp015_submission.zip` | 0.7096658388930687 | 2026/07/10 08:47:38 | valid | Isotonic OOF calibration on exp009 (G-027a) |
-| 12 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | 2026/07/09 12:38:39 | valid | Successor-Row Frames |
-| 13 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | 2026/07/09 12:44:58 | valid | Satellite Adapter Two-Head |
-| 14 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
-| 15 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
-| 16 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
-| 17 | exp007 | `exp007_submission.zip` | 0.7362157342148196 | 2026/07/09 01:20:50 | valid | Multi-exp equal-weight ensemble |
-| 18 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
-| 19 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
-| 20 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
-| 21 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
-| 22 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | 2026/07/07 04:29:43 | valid | Local baseline |
+| 1 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | 2026/07/16 10:41:11 | valid | 50% exp024 `equal_016_017` + 50% exp018, then overlap patch — **new best**, exp018 mixes in |
+| 2 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | exp024 `equal_016_017` blend + exp014 overlap patch |
+| 3 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | 50% exp016 + 12.5%×4 exp017 seed family + patch — **worse than exp026**: seed checkpoints dilute quality |
+| 4 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | Equal 5-way blend + patch — worse still |
+| 5 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | Unpatched exp016/017 50/50 blend (best unpatched) |
+| 6 | exp018 | `exp018_submission.zip` | 0.6929495140301676 | 2026/07/16 12:57:23 | valid | High-res localization — **best single model**, consistent with best OOF 0.6093 |
+| 7 | exp024 | `exp024_blend_20_40_40.zip` | 0.693975964307325 | 2026/07/12 05:10:40 | valid | 20/40/40 exp009/016/017 |
+| 8 | exp024 | `exp024_equal_009_016_017.zip` | 0.6961199095679 | 2026/07/12 05:11:35 | valid | Adding exp009 to the blend hurts |
+| 9 | exp014 | `exp014_submission.zip` | 0.6968727727408199 | 2026/07/10 12:44:13 | valid | Tile-Overlap GPM Copy Patch on exp009 (G-022) |
+| 10 | exp016 | `exp016_submission.zip` | 0.6977629323809645 | 2026/07/11 11:23:41 | valid | Hurdle log-normal head |
+| 11 | exp017 | `exp017_submission.zip` | 0.6997414980565597 | 2026/07/11 11:24:23 | valid | Physics channels — LB order vs exp016 inverts their OOF order (Δ0.002 < noise) |
+| 12 | exp015 | `exp015_submission.zip` | 0.7096658388930687 | 2026/07/10 08:47:38 | valid | Isotonic OOF calibration on exp009 (G-027a) |
+| 13 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | 2026/07/09 12:38:39 | valid | Successor-Row Frames |
+| 14 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | 2026/07/09 12:44:58 | valid | Satellite Adapter Two-Head |
+| 15 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
+| 16 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
+| 17 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
+| 18 | exp007 | `exp007_submission.zip` | 0.7362157342148196 | 2026/07/09 01:20:50 | valid | Multi-exp equal-weight ensemble |
+| 19 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
+| 20 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite adapter |
+| 21 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
+| 22 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
+| 23 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | 2026/07/07 04:29:43 | valid | Local baseline |
 
 ## Submission Log
 
@@ -61,9 +62,10 @@ Sources:
 | 2026/07/12 05:10:40 | exp024 | `exp024_blend_20_40_40.zip` | 0.693975964307325 | holyholyholy | valid | 20/40/40 exp009/016/017 blend |
 | 2026/07/12 05:11:35 | exp024 | `exp024_equal_009_016_017.zip` | 0.6961199095679 | holyholyholy | valid | Equal exp009/016/017 blend |
 | 2026/07/12 05:13:36 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | holyholyholy | valid | exp016/017 50/50 blend |
-| 2026/07/13 12:01:55 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | holyholyholy | valid | exp024 equal_016_017 + exp014 overlap patch (**current best**) |
+| 2026/07/13 12:01:55 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | holyholyholy | valid | exp024 equal_016_017 + exp014 overlap patch |
 | 2026/07/13 12:02:26 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | holyholyholy | valid | Equal 5-way seed-family blend + patch |
 | 2026/07/13 12:02:46 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | holyholyholy | valid | 50/50-type seed-family blend + patch |
+| 2026/07/16 10:41:11 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | holyholyholy | valid | 50/50 equal_016_017 × exp018 blend + patch (**current best**) |
 | 2026/07/16 12:57:23 | exp018 | `exp018_submission.zip` | 0.6929495140301676 | holyholyholy | valid | High-res localization (G-032), best single model |
 
 ## Leaderboard Context (snapshot 2026-07-10, from the user)
@@ -82,7 +84,7 @@ Sources:
 
 Key reference lines from the official discussion (`doc/discussion_insights.md`): the flat tile-mean
 oracle ("the wall") scores 0.677 on train; perfect tile-mean + perfect wet/dry mask scores 0.594;
-predict-all-zeros scores 0.746. exp026 (0.6746) is just below the wall. E-1
+predict-all-zeros scores 0.746. exp033_w018_050 (0.6720) is below the wall. E-1
 (`outputs/g_eda/exp002`) shows the dominant residual for exp016-018 is per-tile AMOUNT error,
 not placement.
 
@@ -94,8 +96,12 @@ not placement.
 
 ## Observations
 
-- **exp026 (0.67465) is the current best**: exp024 `equal_016_017` (0.69193) + overlap patch.
-  Patch value on the blend = −0.01728 (vs −0.01847 on exp009 in exp014).
+- **exp033_w018_050 (0.67199) is the current best**: mixing exp018 at 50% into
+  `equal_016_017` before the patch gains −0.00266 over exp026 — exp018 adds real diversity.
+  The OOF-optimal mixture (weights, per-satellite variants, blur/threshold) is being computed
+  in `g_eda/exp003`; `g_experiments/exp036` serves its recommendation.
+- exp026 (0.67465): exp024 `equal_016_017` (0.69193) + overlap patch. Patch value on the
+  blend = −0.01728 (vs −0.01847 on exp009 in exp014).
 - **exp018 (0.69295) is the best single model**, in line with its best OOF (0.6093). The
   OOF→LB deltas are consistent: exp018−exp017 = −0.0068 LB vs −0.0070 OOF.
 - **exp016 vs exp017 inverts on LB** (0.69776 vs 0.69974) relative to OOF (0.6186 vs 0.6163).

@@ -26,6 +26,11 @@ if [ "$MODE" = "all_submit" ]; then
   "$PYTHON" "$BASE_DIR/make_submission.py" --config "$CONFIG"
 elif [ "$MODE" = "all" ]; then
   for fold in 0 1 2 3 4; do run_fold "$fold"; done
+elif [[ "$MODE" =~ ^analyze_fold([0-4])$ ]]; then
+  fold="${BASH_REMATCH[1]}"
+  checkpoint="$PROJECT_DIR/g_model/$(basename "$VARIANT_DIR")/best_model_fold${fold}.pt"
+  [ -f "$checkpoint" ] || { echo "Checkpoint not found: $checkpoint"; exit 1; }
+  "$PYTHON" "$BASE_DIR/analyze_oof.py" --config "$CONFIG" --checkpoint "$checkpoint"
 elif [ "$MODE" = "analyze" ]; then
   "$PYTHON" "$BASE_DIR/analyze_oof.py" --config "$CONFIG"
 elif [ "$MODE" = "infer" ]; then

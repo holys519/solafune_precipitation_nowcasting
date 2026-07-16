@@ -9,4 +9,11 @@
 #SBATCH --output=slurm-exp029-%j.out
 #SBATCH --error=slurm-exp029-%j.err
 set -euo pipefail
-bash "$(cd "$(dirname "$0")/.." && pwd)/singularity_variant.sh" "$(cd "$(dirname "$0")" && pwd)" "${1:-0}"
+EXPECTED_EXP=exp029
+if [ -n "${SLURM_SUBMIT_DIR:-}" ] && [ "$(basename "$SLURM_SUBMIT_DIR")" = "$EXPECTED_EXP" ]; then
+  VARIANT_DIR="$SLURM_SUBMIT_DIR"
+else
+  VARIANT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+[ -f "$VARIANT_DIR/config.yaml" ] || { echo "Cannot resolve $EXPECTED_EXP directory: $VARIANT_DIR" >&2; exit 1; }
+bash "$VARIANT_DIR/../singularity_variant.sh" "$VARIANT_DIR" "${1:-0}"

@@ -219,6 +219,20 @@ def analyze() -> None:
             writer.writeheader()
             writer.writerows(rows)
 
+    # combo: per-satellite weights, then blur, then value threshold — the same stacking order
+    # exp036 would serve. Individually each is below the E-3 noise band; combined they may not be.
+    combo_rows = []
+    for sigma in (0.0, 0.5, 0.75, 1.0):
+        blurred = composed if sigma == 0.0 else gaussian_blur(composed, sigma)
+        for threshold in (0.0, 0.10, 0.15, 0.20):
+            combo = np.where(blurred < threshold, 0.0, blurred) if threshold > 0 else blurred
+            combo_rows.append({"sigma": sigma, "value_threshold": threshold, **score(combo)})
+    best_combo = min(combo_rows, key=lambda r: r["overall"])
+    with (OUT_DIR / "combo_sweep.csv").open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(combo_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(combo_rows)
+
     recommendation = {
         "source": "g_eda/exp003 OOF blend optimization",
         "n_tiles": int(n),
@@ -229,6 +243,7 @@ def analyze() -> None:
         "per_satellite_composed": composed_score,
         "blur_best_on_global": best_blur,
         "value_threshold_best_on_global": best_threshold,
+        "combo_best_on_composed": best_combo,
     }
     (OUT_DIR / "recommended_weights.json").write_text(json.dumps(recommendation, indent=2),
                                                       encoding="utf-8")
@@ -243,7 +258,9 @@ def analyze() -> None:
              f"met {composed_score['meteosat']:.4f})",
              f"- blur on global best: sigma={best_blur['sigma']} -> {best_blur['overall']:.4f}",
              f"- value threshold on global best: {best_threshold['value_threshold']} -> "
-             f"{best_threshold['overall']:.4f}", "",
+             f"{best_threshold['overall']:.4f}",
+             f"- combo on composed (blur sigma={best_combo['sigma']}, "
+             f"threshold={best_combo['value_threshold']}): {best_combo['overall']:.4f}", "",
              "Full grids in blend_curve.csv / simplex_grid.csv / blur_sweep.csv / "
              "threshold_sweep.csv; exp036 consumes recommended_weights.json."]
     (OUT_DIR / "BLEND_CURVE.md").write_text("\n".join(lines), encoding="utf-8")

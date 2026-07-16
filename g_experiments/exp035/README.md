@@ -22,12 +22,24 @@ batch 128, スケジューラなし) にして、A/B差分が入力/ボトルネ
 | `config.yaml` | full (exp028入力 + dilation) | 165 | `g_model/exp035` |
 | `config_no_dilation.yaml` | exp028入力のみ | 165 | `g_model/exp035_no_dilation` |
 | `config_dilation_only.yaml` | dilationのみ (105ch) | 105 | `g_model/exp035_dilation_only` |
-| `config_tilemean.yaml` | full + タイル平均補助loss (`tile_mean_weight: 0.3`) | 165 | `g_model/exp035_tilemean` |
+| `config_tilemean.yaml` | **exp018ベース + タイル平均補助lossのみ** (105ch, `tile_mean_weight: 0.3`) | 105 | `g_model/exp035_tilemean` |
 
 `config_tilemean.yaml` はE-1オラクル分解 (`outputs/g_eda/exp002`) の帰結: 3モデルとも
 残差の支配項は配置ではなく**タイル量誤差** (amount_swap 0.545 vs actual 0.609、
 mask_swapは悪化) だったため、multi-scaleラダーの最粗段 (タイル平均そのもの) を
-直接教師する項を追加した。
+直接教師する項を追加した。fullアームが下記の通りゲート不通過だったため、このアームは
+exp018素の構成に対するtile-mean loss単独の効果を測る (当初のfull+tile_meanから変更)。
+
+## A/B結果 (2026-07-16)
+
+| Arm | fold0 | fold4 | 判定 |
+| --- | ---: | ---: | --- |
+| exp018 (対照) | 0.29234 | 0.58531 | — |
+| full (config.yaml) | 0.29485 (+0.0025) | 0.58837 (+0.0031) | **ゲート不通過** — 両fold悪化。5-fold本走しない |
+| no_dilation / dilation_only / tilemean | 実行中 (jobs 3935475-3935480) | | どの要素が悪化要因か切り分け |
+
+exp028/exp030のfold0単独の勝ちは、exp018の高解像アーキテクチャ上では再現しなかった
+(E-3の「fold0単独は弱い証拠」の実例がまた一つ)。
 
 ## Protocol (fold0単独A/Bは廃止 — Round 5計画 §4)
 

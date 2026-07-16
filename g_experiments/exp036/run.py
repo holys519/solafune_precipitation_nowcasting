@@ -20,6 +20,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 import sys
@@ -95,8 +96,26 @@ def load_weights(args: argparse.Namespace) -> dict[str, dict[str, float]]:
     return per_sat
 
 
+def gaussian_blur_2d(array: np.ndarray, sigma: float) -> np.ndarray:
+    """Separable gaussian with edge padding — matches g_eda/exp003's OOF sweep exactly."""
+    radius = max(1, int(math.ceil(3.0 * sigma)))
+    coords = np.arange(-radius, radius + 1, dtype=np.float32)
+    kernel = np.exp(-0.5 * (coords / sigma) ** 2)
+    kernel /= kernel.sum()
+    padded = np.pad(array, ((radius, radius), (0, 0)), mode="edge")
+    out = np.zeros_like(array)
+    for i, k in enumerate(kernel):
+        out += k * padded[i : i + array.shape[0], :]
+    padded = np.pad(out, ((0, 0), (radius, radius)), mode="edge")
+    out = np.zeros_like(array)
+    for i, k in enumerate(kernel):
+        out += k * padded[:, i : i + array.shape[1]]
+    return out
+
+
 def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, str]],
-          files: dict[str, dict[str, Path]]) -> Path:
+          files: dict[str, dict[str, Path]], blur_sigma: float = 0.0,
+          value_threshold: float = 0.0) -> Path:
     raw_dir = SUBMISSIONS / f"exp036/{name}_raw"
     destination = raw_dir / "test_files"
     destination.mkdir(parents=True, exist_ok=True)
@@ -113,7 +132,13 @@ def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, 
             template = template or files[model][filename]
             contribution = weight * array.astype(np.float32)
             blended = contribution if blended is None else blended + contribution
-        write_float32_like_template(template, destination / filename, np.maximum(blended, 0.0))
+        blended = np.maximum(blended, 0.0)
+        # Stacking order matches the OOF combo sweep: blend -> blur -> threshold (patch last).
+        if blur_sigma > 0.0:
+            blended = gaussian_blur_2d(blended, blur_sigma)
+        if value_threshold > 0.0:
+            blended = np.where(blended < value_threshold, 0.0, blended)
+        write_float32_like_template(template, destination / filename, blended)
         if index % 5000 == 0 or index == len(rows):
             print(f"{name}: blended {index}/{len(rows)}", flush=True)
     shutil.copy2(EVALUATION_CSV, raw_dir / "evaluation_target.csv")
@@ -175,6 +200,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scheme", choices=["global", "per_satellite"], default="global")
     parser.add_argument("--weights", help="manual override: 'w016,w017,w018' (global scheme)")
+    parser.add_argument("--blur-sigma", type=float, default=0.0,
+                        help="gaussian blur applied after blending (OOF combo sweep value)")
+    parser.add_argument("--value-threshold", type=float, default=0.0,
+                        help="zero out pixels below this after blur (OOF combo sweep value)")
     parser.add_argument("--zip-raw", action="store_true", help="also zip the unpatched blend")
     parser.add_argument("--skip-patch", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -190,15 +219,23 @@ def main() -> None:
 
     weights = load_weights(args)
     name = args.scheme if not args.weights else "manual"
-    print(json.dumps({"scheme": name, "weights": weights, "files": len(filenames)}, indent=2),
-          flush=True)
+    if args.blur_sigma > 0.0:
+        name += f"_blur{args.blur_sigma:g}".replace(".", "p")
+    if args.value_threshold > 0.0:
+        name += f"_thr{args.value_threshold:g}".replace(".", "p")
+    print(json.dumps({"scheme": name, "weights": weights, "blur_sigma": args.blur_sigma,
+                      "value_threshold": args.value_threshold, "files": len(filenames)},
+                     indent=2), flush=True)
     if args.dry_run:
         return
 
     ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
-    raw_dir = blend(name, weights, rows, files)
-    entry: dict[str, object] = {"scheme": name, "weights": weights, "files": len(filenames),
-                                "raw_dir": str(raw_dir)}
+    raw_dir = blend(name, weights, rows, files, blur_sigma=args.blur_sigma,
+                    value_threshold=args.value_threshold)
+    entry: dict[str, object] = {"scheme": name, "weights": weights,
+                                "blur_sigma": args.blur_sigma,
+                                "value_threshold": args.value_threshold,
+                                "files": len(filenames), "raw_dir": str(raw_dir)}
     if args.zip_raw:
         raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"exp036_{name}_raw.zip", filenames)
         entry["raw_zip"] = str(raw_zip)

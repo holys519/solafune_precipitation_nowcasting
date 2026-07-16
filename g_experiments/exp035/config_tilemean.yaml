@@ -1,6 +1,6 @@
 experiment:
   name: exp035
-  description: "exp035 arm: full config + tile-mean auxiliary loss (E-1 amount-error finding)"
+  description: "exp035 arm: exp018 base + tile-mean auxiliary loss only (E-1 amount-error finding, unconfounded)"
   seed: 42
 
 data:
@@ -20,10 +20,10 @@ data:
 # the successor row's newest frame moved to channel position 0 (closest observation to target
 # time t must not be buried among six symmetric slots).
 features:
-  canonical_bands: true
-  engineered: true
-  temporal_abs: true
-  target_time_first: true
+  canonical_bands: false
+  engineered: false
+  temporal_abs: false
+  target_time_first: false
   ir_rain_proxy: false
 
 split:
@@ -47,7 +47,7 @@ train:
 
 model:
   architecture: highres_hurdle_lognormal_unet
-  in_channels: 165
+  in_channels: 105
   base_channels: 32
   internal_size: 128
   aux_mask_enabled: true
@@ -62,7 +62,7 @@ model:
   serving_sigma_scale: 1.0
   # exp030's receptive-field expansion. In this net the bottleneck sits at 8x8 (128/16), where
   # dilation 4 spans the whole grid — config_no_dilation.yaml is the arm that removes this.
-  bottleneck_dilations: [2, 4]
+  bottleneck_dilations: []
 
 loss:
   name: hurdle_lognormal

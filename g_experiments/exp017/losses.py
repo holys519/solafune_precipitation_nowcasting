@@ -84,7 +84,10 @@ class FocalTverskyRainLoss(TwoHeadRainLoss):
         if not isinstance(output, dict):
             return base
         truth = (target > self.rain_threshold).float()
-        prob = output["rain_prob"].clamp(1e-5, 1.0 - 1e-5)
+        # float32 before clamping: under AMP autocast rain_prob is fp16, where 1-1e-5 rounds
+        # to exactly 1.0, so dry pixels with saturated prob gave pt=0 and log(0)=-inf — this
+        # NaN'd exp031 fold0 from epoch 1.
+        prob = output["rain_prob"].float().clamp(1e-6, 1.0 - 1e-6)
         pt = torch.where(truth > 0, prob, 1.0 - prob)
         focal = (-(1.0 - pt).pow(self.focal_gamma) * pt.log()).mean()
         dims = (1, 2, 3)

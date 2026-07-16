@@ -1,6 +1,6 @@
 # Experiment Plan
 
-*Last updated: 2026-07-12*
+*Last updated: 2026-07-16*
 
 ## Competition
 
@@ -52,6 +52,14 @@
 | exp025 | Multi-seed variance | Configurable source, seeds, folds, and isolated checkpoints | Implemented; run after winner selection |
 | exp026 | Overlap patch on exp024 blend | Apply exp014's tile-overlap GPM copy to `exp024/equal_016_017` (LB best 0.69193 shipped WITHOUT the patch; patch was worth −0.0185 on exp009 base). Pure post-processing, reuses `exp014/apply_overlap.py` with exp026's config | Implemented + smoke-tested (patch machinery verified end-to-end on synthetic sources); cloud run pending |
 | exp027 | Seed-ensemble blend + patch | Inference for exp025's exp017×seed{42,123,2026} checkpoints, blend with exp016/exp017 (`half016_half017family` keeps the LB-winning 50/50 type balance; `equal_all`), then overlap-patch every scheme. Outputs `exp027_<scheme>_patched.zip` | Implemented + smoke-tested (blend weights exact, patch region bit-equals train GPM); cloud run pending |
+| exp028 | Target-time-first + \|Δ\| (165ch) | exp017 features + successor-row newest frame moved to channel 0 + absolute temporal-change channel; exp017-code variant via `run_variant.sh` | fold0 done — tile 0.30120 vs exp017 0.30642 (−0.0052, positive_rmse ±0) → **adopt candidate**, merged into exp035 |
+| exp029 | Satellite-aware IR rain proxy | Per-satellite anchored cold-cloud [0,1] channel per frame | fold0 done — tile 0.30482 (−0.0016) but positive_rmse 2.0073 vs 1.9685 (+0.039) fails its own acceptance rule → **closed** |
+| exp030 | Dilated bottleneck (d=2,4) | Receptive-field expansion without extra downsampling on exp017's two-head net | fold0 done — tile 0.29994 (−0.0065), positive_rmse 1.9188 (−0.050) → **adopt candidate**, merged into exp035. NOTE: `g_model/exp030` folds 1-4 checkpoints are stale 1-2-epoch leftovers; the 5-fold OOF 0.6534 in `outputs/analysis/exp030` mixes them and is NOT a valid five-fold result |
+| exp031 | Focal+Tversky rain auxiliary | Low-weight (0.05) focal+Tversky terms on the occurrence head | fold0 diverged — valid metrics NaN from epoch 1; needs loss-stability fix (eps/clamp/fp32) before rerun. Low priority |
+| exp032 | Satellite-conditional heads | Shared body, per-satellite occurrence/amount heads | fold0 done — tile 0.30882 (+0.0024) → **closed** (positive_rmse improved 1.9467; informs exp036 arm B loss-weight design instead) |
+| exp033 | exp018 blend ladder + patch | No-training post-processing: blend exp024 `equal_016_017` with exp018 at 25/50/75/100%, then exp014 overlap patch; anchor exp026 = 0.6746506841387548 | Run complete (job 3934292) — 4 patched zips + raw dirs built, submissions pending per adaptive order in README |
+| exp034 | OOF rain-threshold inference + blend | Apply each model's OOF-optimal rain_prob_threshold (exp016 0.25 / exp017 0.70 / exp018 0.40) at inference, blend, patch | Implemented; adaptive submission plan shared with exp033 |
+| exp035 | exp018 × exp028 × exp030 integration | Round 5 primary (`doc/plan/round5_experiment_plan_2026-07-16.md`): exp018 high-res localization base + exp028 input design (165ch) + exp030 dilated bottleneck; arms `config_no_dilation` / `config_dilation_only` isolate each axis; collision-free per-arm model dirs | Implemented — smoke test passed on cluster (job 3934664: 3 arms forward/backward + real-data 165ch pipeline). fold0+fold4 A/B vs exp018 (0.29234/0.58531) next |
 
 See `doc/task_tickets.md` for the full ticket list, including which items are `g_experiments`-only
 (A100x2/x4 scaled configs, DDP migration — these are hardware-scaling concerns and are never
@@ -67,3 +75,10 @@ See `doc/task_tickets.md` for the full ticket list, including which items are `g
 | 2026-07-10 | exp014 | public RMSE 0.6968727727408199 | New best public score. Tile-overlap GPM copy patch applied on top of exp009 submission confirms the leak found in `doc/tile_overlap_discovery.md` is real and effective, not just correct on synthetic data |
 | 2026-07-10 | exp015 | public RMSE 0.7096658388930687 | Isotonic OOF calibration (G-027a) improves over exp009 base by 0.0056780510175330. An offline tile-peak proxy check suggested almost no correction of heavy-rain amplitude underestimation, yet the real score improved anyway -- likely from damping over-confident mid/high false-alarm pixels. Not yet combined with exp014's tile-overlap patch |
 | 2026-07-12 | exp016/017 | fold0-3 interim comparison | exp016 mean tile_rmse 0.6320 vs exp017 0.6284; exp021-exp025 added for completion, ablation, diagnostics, blending, and seed variance. |
+| 2026-07-14 | exp021 | five-fold OOF standings | exp009 0.6239 / exp016 0.6186 / exp017 0.6163; exp018 completed separately at **0.6093** (best single model) |
+| 2026-07-15 | exp026 | public RMSE 0.6746506841387548 | New best public: exp024 `equal_016_017` blend + exp014 overlap patch (recorded as exp033's anchor) |
+| 2026-07-16 | exp028-032 | fold0 ablation verdicts | Adopt exp028 (−0.0052) and exp030 (−0.0065); close exp029 (positive_rmse regression) and exp032 (+0.0024); exp031 NaN-diverged, needs loss fix |
+| 2026-07-16 | l_eda/exp003 (E-3) | CV→LB calibration on 9 submitted pairs | 5-fold OOF tile_rmse predicts LB at Spearman 0.90 (residual std 0.0033); **fold0-only is near-uninformative (Spearman 0.50)** — single-fold A/B verdicts above are weak evidence; final accepts must use 5-fold OOF. Fold0+4 screening Spearman 0.78 |
+| 2026-07-16 | exp035 | created + cluster smoke passed | Integration of exp018×exp028×exp030 per Round 5 plan; full-arm fold0 (3934680) and fold4 (3934681) running |
+| 2026-07-16 | g_eda/exp002 (E-1) | oracle ladder on exp016/017/018 OOF | **Dominant residual is per-tile AMOUNT error, not placement**: amount_swap 0.545 vs actual 0.609, while mask_swap (placement oracle) is worse than actual. Added `exp035/config_tilemean.yaml` (tile-mean MSE aux loss); deprioritized exp036 Meteosat-localization. Blur σ=1 is a consistent free −0.002 (below LB noise; piggyback only). All three models already beat the 0.677 flat-mean wall on train OOF — the LB gap (~0.08) is eval-location generalization |
+| 2026-07-16 | exp031 | NaN root cause fixed, fold0 resubmitted (3934743) | Under AMP, fp16 rounds clamp(1e-5, 1-1e-5)'s upper bound to 1.0, so saturated dry pixels hit log(0) in the focal term; FocalTverskyRainLoss now computes in fp32 |

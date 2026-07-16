@@ -111,24 +111,27 @@ def gaussian_blur_2d(array: np.ndarray, sigma: float) -> np.ndarray:
     return out
 
 
-def neighbor_indices(rows: list[dict[str, str]]) -> tuple[list[int], list[int]]:
-    """Same-location +-30 min neighbors, mirroring inference.py's apply_temporal_smoothing
-    and the g_eda/exp004 OOF sweep."""
+def neighbor_indices(rows: list[dict[str, str]]) -> dict[int, list[int]]:
+    """Same-location temporal neighbors at +-30/+-60 min, mirroring the g_eda/exp004 sweeps."""
     key_of = {}
     for i, row in enumerate(rows):
         key_of[(row["name_location"], datetime.fromisoformat(row["datetime"]))] = i
-    prev_idx, next_idx = [], []
-    for row in rows:
-        when = datetime.fromisoformat(row["datetime"])
-        prev_idx.append(key_of.get((row["name_location"], when - timedelta(minutes=30)), -1))
-        next_idx.append(key_of.get((row["name_location"], when + timedelta(minutes=30)), -1))
-    return prev_idx, next_idx
+    neighbors: dict[int, list[int]] = {}
+    for offset in (-60, -30, 30, 60):
+        idx = []
+        for row in rows:
+            when = datetime.fromisoformat(row["datetime"])
+            idx.append(key_of.get((row["name_location"], when + timedelta(minutes=offset)), -1))
+        neighbors[offset] = idx
+    return neighbors
 
 
 def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, str]],
           files: dict[str, dict[str, Path]], blur_sigma: float = 0.0,
           value_threshold: float = 0.0,
-          smooth: tuple[float, float, float] | None = None) -> Path:
+          smooth: tuple[float, float, float] | None = None,
+          per_sat_smooth: dict[str, list[float]] | None = None,
+          per_sat_thresholds: dict[str, float] | None = None) -> Path:
     raw_dir = SUBMISSIONS / f"{EXP_PREFIX}/{name}_raw"
     destination = raw_dir / "test_files"
     destination.mkdir(parents=True, exist_ok=True)
@@ -155,19 +158,24 @@ def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, 
 
     # Stacking order matches the OOF sweeps: blend -> temporal smoothing -> blur -> threshold
     # (patch last).
-    if smooth is not None:
-        cw, pw, nw = smooth
-        prev_idx, next_idx = neighbor_indices(rows)
+    if smooth is not None or per_sat_smooth is not None:
+        neighbors = neighbor_indices(rows)
         smoothed = []
-        for i in range(len(rows)):
+        for i, row in enumerate(rows):
+            if per_sat_smooth is not None:
+                cw, p1, n1, p2, n2 = per_sat_smooth[row["satellite_target"]]
+            else:
+                cw, p1, n1 = smooth
+                p2 = n2 = 0.0
             weighted = cw * blended_arrays[i]
             total = cw
-            if prev_idx[i] >= 0:
-                weighted = weighted + pw * blended_arrays[prev_idx[i]]
-                total += pw
-            if next_idx[i] >= 0:
-                weighted = weighted + nw * blended_arrays[next_idx[i]]
-                total += nw
+            for offset, w in ((-30, p1), (30, n1), (-60, p2), (60, n2)):
+                if w <= 0.0:
+                    continue
+                j = neighbors[offset][i]
+                if j >= 0:
+                    weighted = weighted + w * blended_arrays[j]
+                    total += w
             smoothed.append(weighted / total)
         blended_arrays = smoothed
 
@@ -175,8 +183,11 @@ def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, 
         array = blended_arrays[i]
         if blur_sigma > 0.0:
             array = gaussian_blur_2d(array, blur_sigma)
-        if value_threshold > 0.0:
-            array = np.where(array < value_threshold, 0.0, array)
+        threshold = value_threshold
+        if per_sat_thresholds is not None:
+            threshold = float(per_sat_thresholds[row["satellite_target"]])
+        if threshold > 0.0:
+            array = np.where(array < threshold, 0.0, array)
         write_float32_like_template(templates[i], destination / row["gpm_imerg_filename"], array)
     shutil.copy2(EVALUATION_CSV, raw_dir / "evaluation_target.csv")
     return raw_dir
@@ -243,6 +254,10 @@ def main() -> None:
                         help="zero out pixels below this after blur (OOF combo sweep value)")
     parser.add_argument("--smooth", default=None,
                         help="temporal smoothing 'center,prev,next' (g_eda/exp004 sweep value)")
+    parser.add_argument("--postprocess-json", default=None,
+                        help="g_eda/exp004 recommended_postprocess.json: per-satellite 5-tap "
+                             "smoothing + blur + per-satellite thresholds (overrides "
+                             "--smooth/--blur-sigma/--value-threshold)")
     parser.add_argument("--zip-raw", action="store_true", help="also zip the unpatched blend")
     parser.add_argument("--skip-patch", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -267,6 +282,17 @@ def main() -> None:
 
     weights = load_weights(args)
     name = args.scheme if not args.weights else "manual"
+    per_sat_smooth = None
+    per_sat_thresholds = None
+    if args.postprocess_json:
+        post = json.loads(Path(args.postprocess_json).read_text())
+        per_sat_smooth = post["per_satellite_smooth"]
+        per_sat_thresholds = post["per_satellite_thresholds"]
+        args.blur_sigma = float(post["blur_sigma"])
+        args.smooth = None
+        name_suffix = "_joint"
+    else:
+        name_suffix = ""
     smooth = None
     if args.smooth:
         smooth = tuple(float(v) for v in args.smooth.split(","))
@@ -275,8 +301,9 @@ def main() -> None:
         name += f"_sm{smooth[0]:g}".replace(".", "p")
     if args.blur_sigma > 0.0:
         name += f"_blur{args.blur_sigma:g}".replace(".", "p")
-    if args.value_threshold > 0.0:
+    if args.value_threshold > 0.0 and per_sat_thresholds is None:
         name += f"_thr{args.value_threshold:g}".replace(".", "p")
+    name += name_suffix
     print(json.dumps({"scheme": name, "weights": weights, "blur_sigma": args.blur_sigma,
                       "value_threshold": args.value_threshold, "files": len(filenames)},
                      indent=2), flush=True)
@@ -285,11 +312,14 @@ def main() -> None:
 
     ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
     raw_dir = blend(name, weights, rows, files, blur_sigma=args.blur_sigma,
-                    value_threshold=args.value_threshold, smooth=smooth)
+                    value_threshold=args.value_threshold, smooth=smooth,
+                    per_sat_smooth=per_sat_smooth, per_sat_thresholds=per_sat_thresholds)
     entry: dict[str, object] = {"scheme": name, "weights": weights,
                                 "blur_sigma": args.blur_sigma,
                                 "value_threshold": args.value_threshold,
                                 "smooth": list(smooth) if smooth else None,
+                                "per_sat_smooth": per_sat_smooth,
+                                "per_sat_thresholds": per_sat_thresholds,
                                 "files": len(filenames), "raw_dir": str(raw_dir)}
     if args.zip_raw:
         raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"{EXP_PREFIX}_{name}_raw.zip", filenames)

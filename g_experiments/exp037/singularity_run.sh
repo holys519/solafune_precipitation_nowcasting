@@ -52,6 +52,6 @@ if [ "${1:-}" != "--blend-only" ]; then
 fi
 
 run_py "$PROJECT_DIR/g_experiments/exp036/run.py" \
-  --scheme per_satellite --blur-sigma 1.0 --value-threshold 0.2 \
+  --scheme per_satellite --smooth 0.25,0.3,0.45 --blur-sigma 1.0 --value-threshold 0.2 \
   --sources-root "$PROJECT_DIR/outputs/submissions/exp037" \
   --out-prefix exp037 --zip-raw

@@ -172,28 +172,36 @@ def predict_ensemble(
     x: torch.Tensor,
     amp: bool,
     use_flip_tta: bool,
+    use_rot90_tta: bool = False,
 ) -> dict[str, torch.Tensor]:
-    views: list[tuple[torch.Tensor, tuple[int, ...] | None]] = [(x, None)]
+    # views: (input, inverse) where inverse maps a prediction back to the identity frame.
+    views: list[tuple[torch.Tensor, object]] = [(x, None)]
     if use_flip_tta:
         views.append((torch.flip(x, dims=(-1,)), (-1,)))
         views.append((torch.flip(x, dims=(-2,)), (-2,)))
+    if use_rot90_tta:
+        # rot90/180/270 complete the training augmentation group (flips + rot90);
+        # inverse rotation is rot90 with -k.
+        for k in (1, 2, 3):
+            views.append((torch.rot90(x, k, dims=(-2, -1)), ("rot", -k)))
+
+    def undo(tensor: torch.Tensor, inverse: object) -> torch.Tensor:
+        if inverse is None:
+            return tensor
+        if isinstance(inverse, tuple) and inverse and inverse[0] == "rot":
+            return torch.rot90(tensor, inverse[1], dims=(-2, -1))
+        return torch.flip(tensor, dims=inverse)
 
     total: dict[str, torch.Tensor] = {}
     count = 0
     for model in models:
-        for view, flip_dims in views:
+        for view, inverse in views:
             with cuda_autocast(enabled=amp):
                 output = model(view)
-            pred = prediction_from_output(output)
-            if flip_dims is not None:
-                pred = torch.flip(pred, dims=flip_dims)
-            pred = pred.float()
+            pred = undo(prediction_from_output(output), inverse).float()
             total["pred"] = pred if "pred" not in total else total["pred"] + pred
             if isinstance(output, dict) and "rain_prob" in output:
-                rain_prob = output["rain_prob"]
-                if flip_dims is not None:
-                    rain_prob = torch.flip(rain_prob, dims=flip_dims)
-                rain_prob = rain_prob.float()
+                rain_prob = undo(output["rain_prob"], inverse).float()
                 total["rain_prob"] = rain_prob if "rain_prob" not in total else total["rain_prob"] + rain_prob
             count += 1
     return {key: value / count for key, value in total.items()}
@@ -265,6 +273,7 @@ def main() -> None:
 
     clip_min = float(config["model"]["clip_min"])
     use_flip_tta = bool(config["tta"]["enabled"]) and bool(config["tta"].get("flip", True))
+    use_rot90_tta = bool(config["tta"]["enabled"]) and bool(config["tta"].get("rot90", False))
     amp = bool(config["train"]["amp"])
     post_cfg = config.get("postprocess", {})
     calibration_path = None
@@ -288,7 +297,8 @@ def main() -> None:
     prediction_items: list[dict[str, Any]] = []
     for batch in loader:
         x = batch["x"].cuda(non_blocking=True)
-        output = predict_ensemble(models, x, amp=amp, use_flip_tta=use_flip_tta)
+        output = predict_ensemble(models, x, amp=amp, use_flip_tta=use_flip_tta,
+                                   use_rot90_tta=use_rot90_tta)
         pred = output["pred"]
         if calibration is not None:
             rain_prob_threshold = float(calibration.get("rain_prob_threshold", 0.0))
@@ -377,6 +387,7 @@ def main() -> None:
         "prediction_dir": str(prediction_dir),
         "checkpoints": [str(p) for p in checkpoint_paths],
         "flip_tta": use_flip_tta,
+        "rot90_tta": use_rot90_tta,
         "calibration": {k: v for k, v in calibration.items() if not k.startswith("isotonic")} if calibration else None,
         "calibration_mode": calibration_mode,
         "value_threshold": value_threshold,

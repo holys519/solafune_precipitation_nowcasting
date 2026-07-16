@@ -29,22 +29,20 @@ from pathlib import Path
 
 import numpy as np
 import yaml
+from datetime import datetime, timedelta
 
 ROOT = Path(__file__).resolve().parents[2]
 EXP014 = ROOT / "g_experiments/exp014"
 EXP017 = ROOT / "g_experiments/exp017"
 SUBMISSIONS = ROOT / "outputs/submissions"
+# Overridden by --out-prefix / --sources-root (exp037 reuses this pipeline for TTA sources).
+EXP_PREFIX = "exp036"
 ANALYSIS_DIR = ROOT / "outputs/analysis/exp036"
 EVALUATION_CSV = ROOT / "data/evaluation_dataset/evaluation_target.csv"
 TRAIN_CSV = ROOT / "data/train_dataset/train_dataset.csv"
 TRAIN_DIR = ROOT / "data/train_dataset"
 RECOMMENDED = ROOT / "outputs/g_eda/exp003/recommended_weights.json"
 
-SOURCES = {
-    "exp016": SUBMISSIONS / "exp016",
-    "exp017": SUBMISSIONS / "exp017",
-    "exp018": SUBMISSIONS / "exp018",
-}
 MODELS = ("exp016", "exp017", "exp018")
 SATELLITES = ("goes", "himawari", "meteosat")
 
@@ -113,12 +111,30 @@ def gaussian_blur_2d(array: np.ndarray, sigma: float) -> np.ndarray:
     return out
 
 
+def neighbor_indices(rows: list[dict[str, str]]) -> tuple[list[int], list[int]]:
+    """Same-location +-30 min neighbors, mirroring inference.py's apply_temporal_smoothing
+    and the g_eda/exp004 OOF sweep."""
+    key_of = {}
+    for i, row in enumerate(rows):
+        key_of[(row["name_location"], datetime.fromisoformat(row["datetime"]))] = i
+    prev_idx, next_idx = [], []
+    for row in rows:
+        when = datetime.fromisoformat(row["datetime"])
+        prev_idx.append(key_of.get((row["name_location"], when - timedelta(minutes=30)), -1))
+        next_idx.append(key_of.get((row["name_location"], when + timedelta(minutes=30)), -1))
+    return prev_idx, next_idx
+
+
 def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, str]],
           files: dict[str, dict[str, Path]], blur_sigma: float = 0.0,
-          value_threshold: float = 0.0) -> Path:
-    raw_dir = SUBMISSIONS / f"exp036/{name}_raw"
+          value_threshold: float = 0.0,
+          smooth: tuple[float, float, float] | None = None) -> Path:
+    raw_dir = SUBMISSIONS / f"{EXP_PREFIX}/{name}_raw"
     destination = raw_dir / "test_files"
     destination.mkdir(parents=True, exist_ok=True)
+
+    blended_arrays: list[np.ndarray] = []
+    templates: list[Path] = []
     for index, row in enumerate(rows, start=1):
         filename = row["gpm_imerg_filename"]
         triple = weights[row["satellite_target"]]
@@ -132,15 +148,36 @@ def blend(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, 
             template = template or files[model][filename]
             contribution = weight * array.astype(np.float32)
             blended = contribution if blended is None else blended + contribution
-        blended = np.maximum(blended, 0.0)
-        # Stacking order matches the OOF combo sweep: blend -> blur -> threshold (patch last).
-        if blur_sigma > 0.0:
-            blended = gaussian_blur_2d(blended, blur_sigma)
-        if value_threshold > 0.0:
-            blended = np.where(blended < value_threshold, 0.0, blended)
-        write_float32_like_template(template, destination / filename, blended)
+        blended_arrays.append(np.maximum(blended, 0.0))
+        templates.append(template)
         if index % 5000 == 0 or index == len(rows):
             print(f"{name}: blended {index}/{len(rows)}", flush=True)
+
+    # Stacking order matches the OOF sweeps: blend -> temporal smoothing -> blur -> threshold
+    # (patch last).
+    if smooth is not None:
+        cw, pw, nw = smooth
+        prev_idx, next_idx = neighbor_indices(rows)
+        smoothed = []
+        for i in range(len(rows)):
+            weighted = cw * blended_arrays[i]
+            total = cw
+            if prev_idx[i] >= 0:
+                weighted = weighted + pw * blended_arrays[prev_idx[i]]
+                total += pw
+            if next_idx[i] >= 0:
+                weighted = weighted + nw * blended_arrays[next_idx[i]]
+                total += nw
+            smoothed.append(weighted / total)
+        blended_arrays = smoothed
+
+    for i, row in enumerate(rows):
+        array = blended_arrays[i]
+        if blur_sigma > 0.0:
+            array = gaussian_blur_2d(array, blur_sigma)
+        if value_threshold > 0.0:
+            array = np.where(array < value_threshold, 0.0, array)
+        write_float32_like_template(templates[i], destination / row["gpm_imerg_filename"], array)
     shutil.copy2(EVALUATION_CSV, raw_dir / "evaluation_target.csv")
     return raw_dir
 
@@ -167,10 +204,10 @@ def validate_submission_zip(zip_path: Path, filenames: list[str]) -> None:
 
 
 def apply_overlap_patch(name: str, raw_dir: Path, filenames: list[str]) -> Path:
-    patched_dir = SUBMISSIONS / f"exp036/{name}_patched"
-    patched_zip = SUBMISSIONS / f"exp036_{name}_patched.zip"
+    patched_dir = SUBMISSIONS / f"{EXP_PREFIX}/{name}_patched"
+    patched_zip = SUBMISSIONS / f"{EXP_PREFIX}_{name}_patched.zip"
     patch_config = {
-        "experiment": {"name": "exp036",
+        "experiment": {"name": EXP_PREFIX,
                        "description": f"OOF-weighted blend {name} + exp014 overlap patch",
                        "seed": 42},
         "data": {"train_csv": str(TRAIN_CSV), "evaluation_csv": str(EVALUATION_CSV),
@@ -204,14 +241,25 @@ def main() -> None:
                         help="gaussian blur applied after blending (OOF combo sweep value)")
     parser.add_argument("--value-threshold", type=float, default=0.0,
                         help="zero out pixels below this after blur (OOF combo sweep value)")
+    parser.add_argument("--smooth", default=None,
+                        help="temporal smoothing 'center,prev,next' (g_eda/exp004 sweep value)")
     parser.add_argument("--zip-raw", action="store_true", help="also zip the unpatched blend")
     parser.add_argument("--skip-patch", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--sources-root", default=str(SUBMISSIONS),
+                        help="root holding exp016/exp017/exp018 prediction dirs")
+    parser.add_argument("--out-prefix", default="exp036",
+                        help="prefix for output dirs/zips (e.g. exp037 for TTA sources)")
     args = parser.parse_args()
+
+    global EXP_PREFIX, ANALYSIS_DIR
+    EXP_PREFIX = args.out_prefix
+    ANALYSIS_DIR = ROOT / "outputs/analysis" / EXP_PREFIX
+    sources_root = Path(args.sources_root)
 
     rows = read_evaluation_rows()
     filenames = [row["gpm_imerg_filename"] for row in rows]
-    files = {model: source_files(SOURCES[model]) for model in MODELS}
+    files = {model: source_files(sources_root / model) for model in MODELS}
     for model, model_files in files.items():
         missing = set(filenames) - set(model_files)
         if missing:
@@ -219,6 +267,12 @@ def main() -> None:
 
     weights = load_weights(args)
     name = args.scheme if not args.weights else "manual"
+    smooth = None
+    if args.smooth:
+        smooth = tuple(float(v) for v in args.smooth.split(","))
+        if len(smooth) != 3:
+            raise ValueError("--smooth expects 'center,prev,next'")
+        name += f"_sm{smooth[0]:g}".replace(".", "p")
     if args.blur_sigma > 0.0:
         name += f"_blur{args.blur_sigma:g}".replace(".", "p")
     if args.value_threshold > 0.0:
@@ -231,13 +285,14 @@ def main() -> None:
 
     ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
     raw_dir = blend(name, weights, rows, files, blur_sigma=args.blur_sigma,
-                    value_threshold=args.value_threshold)
+                    value_threshold=args.value_threshold, smooth=smooth)
     entry: dict[str, object] = {"scheme": name, "weights": weights,
                                 "blur_sigma": args.blur_sigma,
                                 "value_threshold": args.value_threshold,
+                                "smooth": list(smooth) if smooth else None,
                                 "files": len(filenames), "raw_dir": str(raw_dir)}
     if args.zip_raw:
-        raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"exp036_{name}_raw.zip", filenames)
+        raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"{EXP_PREFIX}_{name}_raw.zip", filenames)
         entry["raw_zip"] = str(raw_zip)
         entry["raw_zip_sha256"] = sha256(raw_zip)
     if not args.skip_patch:
@@ -247,7 +302,7 @@ def main() -> None:
         entry["patched_zip_bytes"] = patched_zip.stat().st_size
 
     summary_path = ANALYSIS_DIR / f"analysis_summary_{name}.json"
-    summary_path.write_text(json.dumps({"experiment": "exp036", **entry}, indent=2),
+    summary_path.write_text(json.dumps({"experiment": EXP_PREFIX, **entry}, indent=2),
                             encoding="utf-8")
     print(f"wrote manifest: {summary_path}", flush=True)
 

@@ -6,6 +6,8 @@ For every experiment with both a public RMSE and OOF sample metrics, computes fo
 candidate CV predictors and measures how well each predicts public-LB ordering:
 
 - oof_tile_rmse:        mean per-tile RMSE over all OOF samples (the current default metric)
+- oof_global_rmse:      RMSE after pooling all pixels across all OOF tiles
+                        (the literal interpretation of the formula on the competition page)
 - oof_sat_weighted:     per-satellite tile RMSE reweighted to the test mix
                         (himawari .39 / meteosat .39 / goes .22, discussion Finding 10)
 - fold0_tile_rmse:      fold 0 only (the exp028-032 screening shortcut)
@@ -13,8 +15,8 @@ candidate CV predictors and measures how well each predicts public-LB ordering:
 
 Outputs (outputs/l_eda/exp003/):
 - cv_lb_pairs.csv       one row per experiment with all predictors + public RMSE
-- CV_LB_CALIBRATION.md  rank correlations, linear fits, residuals, and the implied
-                        LB-noise threshold for accept/reject decisions
+- CV_LB_CALIBRATION.md  rank correlations, linear fits, and historical in-sample
+                        calibration residuals for accept/reject decisions
 """
 
 from __future__ import annotations
@@ -31,10 +33,11 @@ OUT_DIR = PROJECT_DIR / "outputs" / "l_eda" / "exp003"
 SATELLITE_WEIGHTS = {"himawari": 0.39, "meteosat": 0.39, "goes": 0.22}
 
 # Public scores from doc/public_scores.md (2026-07-10) plus exp026's anchor recorded in
-# outputs/analysis/exp033/analysis_summary.json. Model-level submissions only: exp014/exp026
-# are overlap-patch post-processing and exp007 lacks per-sample OOF metrics, so they cannot
-# calibrate a model-OOF predictor. exp015 is isotonic post-processing on exp009 checkpoints;
-# it is kept but flagged because its OOF CSV reflects the uncalibrated model.
+# outputs/analysis/exp033/analysis_summary.json. exp014/exp026 are overlap-patch post-processing
+# and exp007 lacks per-sample OOF metrics, so they cannot calibrate a model-OOF predictor.
+# exp008/exp015 are retained as explicitly flagged heuristic rows: their OOF CSVs reflect the
+# upstream raw model rather than the submitted post-processing. Treat the pure-model subset as
+# the matched primary analysis.
 PUBLIC_SCORES = {
     "exp003": (0.7522576632294679, "model"),
     "exp004": (0.7252533726905589, "model"),
@@ -80,6 +83,10 @@ def predictors_for(rows: list[dict[str, str]]) -> dict[str, float]:
     sat_weighted = sum(SATELLITE_WEIGHTS[sat] * mean(vals) for sat, vals in by_sat.items())
     return {
         "oof_tile_rmse": mean(all_values),
+        # Every target is 41x41, so pooling pixels is equivalent to the root mean
+        # square of the per-tile RMSE values. This deliberately keeps the audit
+        # reproducible from the existing sample-metric CSVs alone.
+        "oof_global_rmse": math.sqrt(mean([value * value for value in all_values])),
         "oof_sat_weighted": sat_weighted,
         "fold0_tile_rmse": mean(by_fold["0"]),
         "fold04_tile_rmse": (mean(by_fold["0"]) + mean(by_fold["4"])) / 2.0,
@@ -89,8 +96,15 @@ def predictors_for(rows: list[dict[str, str]]) -> dict[str, float]:
 def ranks(values: list[float]) -> list[float]:
     order = sorted(range(len(values)), key=lambda i: values[i])
     result = [0.0] * len(values)
-    for rank, idx in enumerate(order):
-        result[idx] = float(rank)
+    start = 0
+    while start < len(order):
+        end = start + 1
+        while end < len(order) and values[order[end]] == values[order[start]]:
+            end += 1
+        average_rank = (start + end - 1) / 2.0
+        for pos in range(start, end):
+            result[order[pos]] = average_rank
+        start = end
     return result
 
 
@@ -142,14 +156,15 @@ def main() -> None:
         entry.update(predictors_for(rows))
         table.append(entry)
 
-    fields = ["experiment", "kind", "public_rmse", "oof_tile_rmse", "oof_sat_weighted",
-              "fold0_tile_rmse", "fold04_tile_rmse"]
+    fields = ["experiment", "kind", "public_rmse", "oof_tile_rmse", "oof_global_rmse",
+              "oof_sat_weighted", "fold0_tile_rmse", "fold04_tile_rmse"]
     with (OUT_DIR / "cv_lb_pairs.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(table)
 
-    predictor_names = ["oof_tile_rmse", "oof_sat_weighted", "fold0_tile_rmse", "fold04_tile_rmse"]
+    predictor_names = ["oof_tile_rmse", "oof_global_rmse", "oof_sat_weighted",
+                       "fold0_tile_rmse", "fold04_tile_rmse"]
     public = [float(row["public_rmse"]) for row in table]
     model_rows = [row for row in table if row["kind"] == "model"]
     model_public = [float(row["public_rmse"]) for row in model_rows]
@@ -158,12 +173,13 @@ def main() -> None:
     lines = ["# E-3: CV -> Public LB calibration", "",
              f"Pairs used: {len(table)} (of which pure model submissions: {len(model_rows)})", "",
              "## Pairs", "",
-             "| Exp | kind | public | oof | sat-weighted | fold0 | fold0+4 |",
-             "| --- | --- | ---: | ---: | ---: | ---: | ---: |"]
+             "| Exp | kind | public | tile mean | global pooled | sat-weighted | fold0 | fold0+4 |",
+             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in table:
         lines.append(
             f"| {row['experiment']} | {row['kind']} | {row['public_rmse']:.4f} | "
-            f"{row['oof_tile_rmse']:.4f} | {row['oof_sat_weighted']:.4f} | "
+            f"{row['oof_tile_rmse']:.4f} | {row['oof_global_rmse']:.4f} | "
+            f"{row['oof_sat_weighted']:.4f} | "
             f"{row['fold0_tile_rmse']:.4f} | {row['fold04_tile_rmse']:.4f} |"
         )
     lines += ["", "## Predictor quality (all pairs)", "",
@@ -182,18 +198,37 @@ def main() -> None:
             f"| {name} | {stats[name]['spearman']:.3f} | {tau:.3f} | {con}/{dis} | "
             f"{resid_std:.4f} | {max(abs(r) for r in residuals):.4f} |"
         )
-    lines += ["", "## Predictor quality (pure model pairs only)", "",
-              "| Predictor | Spearman | Kendall tau |", "| --- | ---: | ---: |"]
+    lines += ["", "## Predictor quality (matched pure-model pairs only)", "",
+              "| Predictor | Spearman | Kendall tau | fit residual std | max \\|resid\\| |",
+              "| --- | ---: | ---: | ---: | ---: |"]
     for name in predictor_names:
         xs = [float(row[name]) for row in model_rows]
         tau, _, _ = kendall(xs, model_public)
-        lines.append(f"| {name} | {spearman(xs, model_public):.3f} | {tau:.3f} |")
+        _, _, residuals = linear_fit(xs, model_public)
+        resid_std = math.sqrt(mean([r * r for r in residuals]))
+        stats[name]["pure_model"] = {
+            "spearman": spearman(xs, model_public), "kendall": tau,
+            "resid_std": resid_std, "max_abs_resid": max(abs(r) for r in residuals),
+        }
+        lines.append(
+            f"| {name} | {spearman(xs, model_public):.3f} | {tau:.3f} | "
+            f"{resid_std:.4f} | {max(abs(r) for r in residuals):.4f} |"
+        )
 
     best = min(stats, key=lambda k: 1 - abs(stats[k]["spearman"]))
     lines += ["", "## Reading", "",
               f"- Highest-|Spearman| predictor: **{best}**.",
-              "- `fit residual std` is the empirical LB-noise scale: OOF-predicted LB deltas smaller",
-              "  than ~1 residual std cannot be trusted from CV alone.",
+              "- `oof_global_rmse` is an audit comparator, not an assertion about the hidden",
+              "  evaluator. Confirm the server aggregation with the organizer before deriving",
+              "  the Bayes-optimal serving statistic from the metric.",
+              "- The pure-model subset is the matched primary analysis. exp008/exp015 in the",
+              "  all-pairs table reuse raw upstream OOF for post-processed Public submissions.",
+              "- These ten models are closely related, and historical experiment/checkpoint",
+              "  selection partly used the tile metric. Treat the correlation as an in-sample,",
+              "  selection-biased diagnostic that is also confounded by OOF/Public shift.",
+              "- `fit residual std` is the in-sample calibration residual for this historical",
+              "  model family, not a general estimate of leaderboard noise. Deltas smaller than",
+              "  this scale require stronger fold/regime evidence.",
               "- Discordant pairs above identify exactly which historical A/Bs the predictor",
               "  would have called wrong — inspect them before changing the accept metric.", ""]
     (OUT_DIR / "CV_LB_CALIBRATION.md").write_text("\n".join(lines), encoding="utf-8")

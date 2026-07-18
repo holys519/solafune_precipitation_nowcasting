@@ -9,12 +9,12 @@ had fold0's regime mix (fixed-mix counterfactual). Stdlib only.
 
 from __future__ import annotations
 
+import argparse
 import csv
 from collections import defaultdict
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
-SAMPLE_CSV = PROJECT_DIR / "outputs" / "analysis" / "exp018" / "oof_sample_metrics.csv"
 OUT_DIR = PROJECT_DIR / "outputs" / "l_eda" / "exp004"
 
 REGIME_EDGES = [0.0, 0.01, 0.1, 0.3, 1.0, 100.0]  # target_mean bins (mm/hr tile mean)
@@ -32,8 +32,14 @@ def mean(values: list[float]) -> float:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--exp", default="exp018", help="experiment name under outputs/analysis/")
+    args = parser.parse_args()
+    exp = args.exp
+    sample_csv = PROJECT_DIR / "outputs" / "analysis" / exp / "oof_sample_metrics.csv"
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    rows = list(csv.DictReader(SAMPLE_CSV.open(newline="")))
+    rows = list(csv.DictReader(sample_csv.open(newline="")))
     col = "tile_rmse" if "tile_rmse" in rows[0] else "rmse"
 
     by_fold: dict[str, list[dict]] = defaultdict(list)
@@ -55,7 +61,7 @@ def main() -> None:
         regime_share[fold] = [c / total for c in counts]
         regime_err[fold] = [mean(e) for e in errs]
 
-    lines = ["# E-4: fold variance anatomy (exp018 OOF)", "",
+    lines = [f"# E-4: fold variance anatomy ({exp} OOF)", "",
              "Regime bins by tile target_mean (mm/hr): "
              f"{REGIME_EDGES[:-1]} (last bin open)", "",
              "## Per-fold regime mix (share) and within-regime tile_rmse", "",
@@ -90,7 +96,7 @@ def main() -> None:
             "wet_tile_rmse": round(mean([float(r[col]) for r in wet]), 4) if wet else "",
         })
     loc_rows.sort(key=lambda r: -float(r["tile_rmse"]))
-    with (OUT_DIR / "location_anatomy.csv").open("w", newline="") as f:
+    with (OUT_DIR / f"location_anatomy_{exp}.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(loc_rows[0].keys()))
         writer.writeheader()
         writer.writerows(loc_rows)
@@ -101,7 +107,7 @@ def main() -> None:
         lines.append(f"| {row['fold']} | {row['location']} | {row['satellite']} | "
                      f"{row['tile_rmse']} | {row['target_mean']} | {row['share_target_mean_gt0.1']} |")
 
-    (OUT_DIR / "FOLD_ANATOMY.md").write_text("\n".join(lines), encoding="utf-8")
+    (OUT_DIR / f"FOLD_ANATOMY_{exp}.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
 
 

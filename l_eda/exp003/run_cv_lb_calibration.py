@@ -52,6 +52,7 @@ PUBLIC_SCORES = {
     "exp017": (0.6997414980565597, "model"),
     "exp018": (0.6929495140301676, "model"),
     "exp035_no_dilation": (0.6860146267326392, "model"),
+    "exp038": (0.6891638997287517, "model-strict-family"),
 }
 
 

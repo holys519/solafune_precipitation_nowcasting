@@ -47,19 +47,21 @@ def cache_path(exp_name: str) -> Path:
     return OUT_DIR / f"{exp_name}_oof_pred.npz"
 
 
-def build_cache(exp_name: str, batch_size: int, num_workers: int) -> None:
+def build_cache(exp_name: str, batch_size: int, num_workers: int,
+                 module_dir: str | None = None, checkpoint_dir: str | None = None) -> None:
     import torch
     from torch.utils.data import DataLoader
 
-    exp_dir = PROJECT_DIR / "g_experiments" / exp_name
+    exp_dir = PROJECT_DIR / "g_experiments" / (module_dir or exp_name)
     sys.path.insert(0, str(exp_dir))
     import dataset as dataset_mod  # noqa: E402
     import model as model_mod  # noqa: E402
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoints = sorted((PROJECT_DIR / "g_model" / exp_name).glob("best_model_fold*.pt"))
+    ckpt_dir = PROJECT_DIR / "g_model" / (checkpoint_dir or exp_name)
+    checkpoints = sorted(ckpt_dir.glob("best_model_fold*.pt"))
     if len(checkpoints) != 5:
-        raise FileNotFoundError(f"{exp_name}: expected 5 checkpoints, found {len(checkpoints)}")
+        raise FileNotFoundError(f"{exp_name}: expected 5 checkpoints, found {len(checkpoints)} in {ckpt_dir}")
 
     preds, targets, unique_ids, satellites, folds = [], [], [], [], []
     for checkpoint_path in checkpoints:
@@ -270,6 +272,10 @@ def analyze() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache", metavar="EXP", help="phase 1: cache OOF preds for one experiment")
+    parser.add_argument("--module-dir", default=None,
+                        help="g_experiments dir providing dataset.py/model.py, if different from --cache name")
+    parser.add_argument("--checkpoint-dir", default=None,
+                        help="g_model dir with best_model_fold*.pt, if different from --cache name")
     parser.add_argument("--analyze", action="store_true", help="phase 2: compute curves from caches")
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--num-workers", type=int, default=12)
@@ -277,7 +283,8 @@ def main() -> None:
 
     started = time.time()
     if args.cache:
-        build_cache(args.cache, args.batch_size, args.num_workers)
+        build_cache(args.cache, args.batch_size, args.num_workers,
+                    module_dir=args.module_dir, checkpoint_dir=args.checkpoint_dir)
     if args.analyze:
         analyze()
     if not args.cache and not args.analyze:

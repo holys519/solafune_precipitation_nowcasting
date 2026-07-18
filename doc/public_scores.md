@@ -72,6 +72,9 @@ Sources:
 | 2026/07/16 12:57:23 | exp018 | `exp018_submission.zip` | 0.6929495140301676 | holyholyholy | valid | High-res localization (G-032), best single model |
 | 2026/07/16 06:48:24 | exp036 | `exp036_per_satellite_blur1_thr0p2_patched.zip` | 0.6706858062196032 | holyholyholy | valid | OOF per-satellite blend + blur + threshold + patch; OOF予測−0.0032に対し実測−0.0013 |
 | 2026/07/16 07:33:53 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | holyholyholy | valid | + temporal smoothing (0.25/0.30/0.45) (**current best**, ~rank 24) |
+| 2026/07/17 10:34:09 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | holyholyholy | valid | 3-tap smoothing stack, no patch — patch value on this stack = 0.6834922402930078 - 0.6661746681900441 = 0.0173175721029637 |
+| 2026/07/17 10:27:20 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | holyholyholy | valid | 5-tap ±60min smoothing (per-satellite) + blur 0.5 + per-satellite thresholds + patch (**current best**) |
+| 2026/07/17 10:27:45 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | holyholyholy | valid | same stack, no patch (amber track) — patch contribution = 0.6824222826340521 - 0.6652621793536686 = 0.0171601032803835 |
 | 2026/07/16 08:05:21 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | holyholyholy | valid | rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ |
 
 ## Leaderboard Context (snapshot 2026-07-16, from the user)

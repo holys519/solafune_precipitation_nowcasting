@@ -477,6 +477,55 @@ rot90 TTAは効果なしと判定、exp037クローズ**。source切替はせず
 (推論コスト3倍の節約にもなる)。flip TTAで既に飽和していたとみられる。
 後処理の残り弾は `exp036_per_satellite_blur0p5_joint_patched.zip` (OOF −0.0019、生成済み)。
 
+## 13. 締切までの最終プラン (2026-07-18 策定, 締切 07-27 23:59 GMT)
+
+### 確定した経験則 (プランの前提)
+
+| 事実 | 値 | 出典 |
+| --- | --- | --- |
+| patch寄与は一定 | +0.017 (3回測定: 0.0172/0.0173/0.0170) | amber→red換算は計算で足りる。**redへの提出枠消費は今後不要** |
+| OOF→LB回帰 | LB = 1.268×OOF − 0.080 (残差std 0.0041, 13ペア) | 提出前にLBを±0.005で予測可能 |
+| successor rowの価値 | fold平均で ~0.005 (exp018 0.6157 vs exp038 0.6205) | 運営回答が来ない場合に失う量の見積り |
+| ブレンドの転写率 | ~99% (後処理チューニングは40-50%) | 残り期間はモデル多様性×ブレンドに投資 |
+
+### Track G — strict green (最終提出の第1候補)
+
+| # | アクション | ゲート | 目安 |
+| --- | --- | --- | --- |
+| G1 | exp038 strict zip提出 → strict LBアンカー取得 | — | 07-18 |
+| G2 | exp040 C/D fold0+4 (実行中) → 勝者を5-fold | 両fold同方向でexp038比改善 | 07-19 |
+| G3 | strict OOFキャッシュ (exp038系+exp040系) → green-refitブレンド + green後処理 (threshold/blurのみ、行間平滑化なし) → **strict champion zip** | OOFで単体最良比 −0.003 | 07-20-21 |
+| G4 | strict勝者の2シード追加 (OOF重み付き、exp027の教訓適用) | シードOOFが本体±0.01以内 | 07-21-23 |
+| G5 | (余力) E-9 local solar hour入力 (閉形式・green。座標はGeoNames正規取得+証跡が前提) | fold0+4 | 07-22以降 |
+
+### Track A — amber (運営回答待ちの本線)
+
+| # | アクション | 状態 |
+| --- | --- | --- |
+| A1 | exp038_features (波長整列, amber) fold0/4 — 途中経過で両foldともstrict超え (0.28860/0.59336) | 完走待ち。通れば勝者アーキへ移植 |
+| A2 | amber championの更新: exp038/exp040系を加えた5-sourceブレンド + 行間平滑化 (patchなし) | 現行0.67896の更新。~07-22 |
+| A3 | **運営回答次第で昇格**: successor+平滑化が許可されればamber championが最終ライン (現在greenより約0.02優位) | ユーザーの質問送付が前提 |
+
+### Track R — red (探索専用、原則クローズ)
+
+patch寄与が+0.017一定と確定したため、red版のLB実測は不要になった (amber実測から計算可能)。
+探索ベスト更新の確認が必要な場合のみ1枠使う。
+
+### 最終週 (survey v3 Phase 4)
+
+- 07-24-25: 全trackのchampion確定、green系のclean再現 (commit/config/weight hash/manifest)
+- 07-25-26: zip検証 (29,090 TIFF、非負・dtype・メタデータ)、red/amber混入の機械的チェック、
+  提出説明文の準備 (geocoding出典等)
+- 07-26-27: 最終提出。第1候補=green champion、第2候補=許可されたamber champion。
+  patchは使わない (survey §8)
+- 提出枠は1日~4: green実測2/amber実測1を上限に、最終週へ余力を残す
+
+### 今日のユーザーアクション (最重要)
+
+1. **運営へsurvey §3.4の質問を送付** (特に: successor row可否、行間平滑化可否)。
+   回答の有無で最終提出ラインが~0.02動く、期間内で最大のレバレッジ。
+2. exp038 strict zipが出来次第提出 (strictアンカー)。
+
 ### モデル側の次ステップ
 
 - **exp035 no_dilation が中間経過で有望**: fold0 途中best 0.28694 (exp018 0.29234比 −0.0054、

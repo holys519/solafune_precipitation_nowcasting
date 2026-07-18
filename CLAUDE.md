@@ -6,10 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Solafune competition "宇宙からの降水ナウキャスト" (satellite precipitation nowcasting). Predict calibrated
 GPM-IMERG precipitation rasters from up to 3 recent (≤30 min) multispectral satellite observations
-(Himawari 8/9, GOES, or Meteosat — 16 bands each). Metric is RMSE. **External datasets and external
-pretrained-data are prohibited** — only the distributed data and features derived from it may be used.
-See `doc/overview.md`, `doc/dataset.md`, `doc/competition_rules.md` for details, and
-`EXPERIMENT_REPORT.md` for current results and findings.
+(Himawari 8/9, GOES, or Meteosat — 16 bands each). Metric is RMSE. **External datasets are
+prohibited.** Public pretrained models/weights are permitted only under the licenses explicitly
+listed by the official competition rules; record the exact checkpoint, source, license, retrieval
+date, and hash. Never use target leakage, reverse engineering, paid/exclusive assets, or external
+data-derived features/statistics.
+See `doc/overview.md`, `doc/dataset.md`, and `doc/competition_rules.md` for details. For current
+results and research direction, prefer `doc/public_scores.md`, the latest dated file under
+`doc/plan/`, and `doc/research_survey_v3_2026-07-16.md`; `EXPERIMENT_REPORT.md` is historical.
 
 ## Setup
 

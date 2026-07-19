@@ -15,7 +15,8 @@
 | Submission | Public RMSE | 区分 | 理由 |
 | --- | ---: | --- | --- |
 | exp001-exp008, exp010 各zip | 0.7250-0.7938 | green | 行内入力のみ、後処理はOOF由来 |
-| **exp011** | **0.7232307883574975** | **green (現strictチャンピオン)** | 行内入力のみ |
+| exp011 | 0.7232307883574975 | green | 行内入力のみ。旧strictチャンピオン |
+| **exp038** | **0.6891638997287517** | **green (現strictチャンピオン)** | current-row-only 54ch、scratch 5-fold |
 | exp009 | 0.7153438899106017 | amber | successor row入力 |
 | exp015 | 0.7096658388930687 | amber | exp009 checkpointsを継承 |
 | exp016 / exp017 / exp018 | 0.6978 / 0.6997 / 0.6929 | amber | successor row入力 (105/163ch系) |
@@ -25,18 +26,21 @@
 | exp036_per_satellite_blur1_thr0p2_patched | 0.6706858062196032 | red | patch (+amber sources) |
 | exp036_per_satellite_sm0p25_blur1_thr0p2_patched | **0.6661746681900441** | red | patch + 行間平滑化 (amber) + amber sources |
 | exp037 (TTA) patched | 0.666259584999578 | red | 同上 |
+| exp036_per_satellite_blur0p5_joint_patched | 0.6652621793536686 | red | patch + 行間平滑化 + amber sources |
+| exp036_per_satellite_blur0p5_joint_raw | 0.6824222826340521 | amber | patchなし、行間平滑化 + successor由来sources |
+| exp039_4src_joint_patched | **0.6619116739607654** | red | overlap patch + amber sources |
+| exp039_4src_joint_raw | 0.6789588628265085 | amber | patchなし、successor由来sources |
 
 ## 未提出アーティファクトの区分
 
 | Artifact | 区分 | 備考 |
 | --- | --- | --- |
-| `exp036_per_satellite_blur0p5_joint_patched.zip` | red | patch含む。amber版は`*_raw.zip` (それでも行間平滑化+successorでamber) |
 | exp033/034/036/037 の `*_raw.zip` 群 | amber | patchなしだがsuccessor由来sources (+平滑化) |
 | exp035系 checkpoints | amber | successor row入力 (context_rows: 2) |
-| **exp038 (config.yaml)** | **green** | strict baseline再構築 (row-only 54ch)。このトラックの起点 |
 | exp038 (config_features.yaml) | amber | 波長整列表が外部仕様由来 |
 | g_eda/exp003-005 OOFキャッシュ・スイープ | amber | exp016/017/018由来。green判断には流用しない (スクリーニング専用) |
 | exp034 threshold zips | amber | exp016/017/018 sources |
+| exp043_zero_baseline (all-zero, no model) | green | 診断専用。regime-shift仮説の検証用、スコア改善目的ではない |
 
 ## 運用ルール
 

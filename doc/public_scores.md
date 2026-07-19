@@ -15,7 +15,8 @@ Sources:
 
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
-| 1 | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | overall tracked best; red (overlap patch) |
+| 1 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | 2026/07/19 10:10:12 | valid | overall best; red (overlap patch); 5-source blend + exp038_features |
+| 1b | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | red; superseded by exp042 |
 | 2 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | 2026/07/17 10:27:20 | valid | 5-tap temporal smoothing + patch; red |
 | 3 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | 3-tap temporal smoothing + patch; red |
 | 4 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | 2026/07/16 08:05:21 | valid | rot90 TTA is effectively tied; red |
@@ -69,6 +70,7 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/18 12:14:31 | exp039 | `exp039_4src_joint_raw.zip` | 0.6789588628265085 | holyholyholy | valid | 4-source blend, no patch (amber champion). Patch value = 0.6789588628265085 - 0.6619116739607654 = 0.0170471888657431 — third consistent measurement (~0.017 across 3-way ladder, 3-way joint, 4-way joint) |
 | 2026/07/19 09:34:26 | exp038 | `exp038_features_submission.zip` | 0.6920702884151865 | holyholyholy | valid | current-row + wavelength-aligned physics (amber), standalone 5-fold. **OOF said this beats exp038 strict (fold0 0.28860 vs 0.28954, fold4 0.59336 vs 0.59607) but LB is WORSE than strict (0.69207 vs 0.68916, +0.0029)** — an OOF/LB inversion for the amber feature arm specifically; external-spec-derived band mapping may not generalize as well as it screens |
 | 2026/07/19 09:40:47 | exp042 | `exp042_5src_joint_raw.zip` | 0.6777841449591795 | holyholyholy | valid | 5-source blend (+exp038_features) + joint postprocess, no patch (**new amber champion**). vs exp039 4-source raw: -0.00117 realized (OOF predicted -0.0023, ~51% transfer) |
+| 2026/07/19 10:10:12 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | holyholyholy | valid | 5-source blend + patch (**current overall best**). vs exp039 patched: -0.00112. Patch value on this blend = 0.0169905171 — 4th consistent measurement (~0.017 across 3-way ladder/joint, 4-way joint, 5-way joint) |
 | 2026/07/17 10:27:20 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | holyholyholy | valid | 5-tap ±60min smoothing (per-satellite) + blur 0.5 + per-satellite thresholds + patch (**current best**) |
 | 2026/07/17 10:27:45 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | holyholyholy | valid | same stack, no patch (amber track) — patch contribution = 0.6824222826340521 - 0.6652621793536686 = 0.0171601032803835 |
 | 2026/07/16 08:05:21 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | holyholyholy | valid | rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ |

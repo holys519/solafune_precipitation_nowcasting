@@ -487,6 +487,8 @@ rot90 TTAは効果なしと判定、exp037クローズ**。source切替はせず
 | OOF→LB回帰 | LB = 1.268×OOF − 0.080 (残差std 0.0041, 13ペア) | 提出前にLBを±0.005で予測可能 |
 | successor rowの価値 | fold平均で ~0.005 (exp018 0.6157 vs exp038 0.6205) | 運営回答が来ない場合に失う量の見積り |
 | ブレンドの転写率 | ~99% (後処理チューニングは40-50%) | 残り期間はモデル多様性×ブレンドに投資 |
+| patch値は4回目もほぼ一定 | +0.0170 (5-sourceブレンドでも再現) | exp042_5src_joint_patched=0.660794が新総合ベスト |
+| scale補正の伸びしろは枯渇 | OOF −0.00069のみ(g_eda/exp003/run_scale_correction.py, 2026-07-19) | ノイズ閾値未満、単独提出せず次のブレンド更新にまとめる。per-satellite値(goes: scale0.925/blur0/thr0.05, himawari: scale1.0/blur0/thr0.3, meteosat: scale0.95/blur0.25/thr0.15)は保存済み |
 
 ### Track G — strict green (最終提出の第1候補)
 

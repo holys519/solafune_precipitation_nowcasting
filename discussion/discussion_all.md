@@ -3269,3 +3269,158 @@ Posted 6 日前
  
 
 3. the per-location oracle spread backs your site-adaptation point hard: perfect-tile-mean ranges from 0.003 (dhaka) to 1.53 (hat_yai). the metric basically lives in a handful of wet sites.
+
+# ==================== 2026-07-19 追加取得分 ====================
+
+## Q&A: Does converting provided location names to coordinates count as an external dataset?
+
+shionsuio, posted 2 weeks ago
+
+The provided dataset includes location names but not their corresponding coordinates (latitude/longitude). I would like to convert these location names into geographic coordinates as a preprocessing step, so that the model can learn spatial relationships. Since the coordinates are derived directly from the location names already present in the provided data—rather than introducing new, independent data—I believe this could be considered a data transformation rather than the use of an external dataset. Could the organizers clarify whether this approach is permitted under the current rules?
+
+### charlie (Solafune Crew), posted 2 weeks ago
+
+Hi @shionsuio, Thank you for your interest and for your question regarding the use of location names converted into coordinates. After discussing this with our internal team, we concluded that this technique is considered a feature transformation. Specifically, converting a location name into geographic coordinates is treated as a transformation, since the resulting coordinates are generally constant for a given location.
+
+If you perform this transformation, please ensure that all of the following conditions are met:
+- Use only a free, reproducible, and commercially available geocoding source. Paid services are not permitted.
+- Clearly document the geocoding source used in your submission.
+- Ensure that we can reproduce the transformation during the verification stage.
+
+Please also note that the original geocodes and coordinates were intentionally removed from the dataset to prevent participants from inferring the correct answers from the underlying data sources. Therefore, if you perform geocoding, please use the EPSG:4326 (WGS 84) coordinate reference system to ensure that your transformed coordinates are as accurate and reproducible as possible.
+
+### shionsuio (topic author), posted 2 weeks ago
+
+Thank you for clarifying that converting location names into WGS84 coordinates is considered a feature transformation. I would like to ask a follow-up question about features derived from those coordinates. Would it be permitted to derive additional geographic features such as elevation, distance to coastline, or climate zone from the obtained coordinates, using only free, reproducible, and commercially available open data sources, with the data source and transformation process clearly documented? Or is the permitted transformation limited to the coordinates themselves and deterministic mathematical features computed directly from them, such as latitude, longitude, hemisphere, trigonometric encodings, and local solar time?
+
+### charlie (Solafune Crew), posted 2 weeks ago
+
+Hey @shionsuio, TL;DR: Only closed-form functions of position and time are allowed. Anything that needs an external dataset — including fully open ones — is out.
+
+Because this is a spatio-temporal nowcasting challenge, the objective is for the model to learn atmospheric dynamics directly from the satellite observation sequences. Injecting static spatial priors would fundamentally undermine that sequence-modeling objective, which is why the rules draw a firm line on external attributes.
+
+**Permitted** — deterministic functions of position and time computed in closed form: latitude/longitude, hemisphere, trigonometric positional encodings, and solar geometry / local solar time. None of these require external data.
+
+**Not permitted** — elevation, distance to coastline, and climate zone, regardless of licensing. Each requires joining to an external dataset (a DEM, coastline geometry, or a climate-classification map), which constitutes use of an external dataset and is strictly prohibited under the competition rules.
+
+The single test is whether a feature needs an external dataset — not whether that dataset is free, open, or well-documented. Fully open sources still count as external data here.
+
+One clarification on the "transformation" exception: it applies solely to closed-form mathematical operations performed directly on the grid parameters (e.g., trigonometric spatial positional encodings) that do not require any external lookup table or DEM.
+
+### hengck23, posted 2 weeks ago
+
+"Use only a free, reproducible, and commercially available geocoding source. Paid services are not permitted." — free but required registration? limited request rate? I think we need to keep a list of what is allowed after the host verifies it.
+
+"Would it be permitted to derive additional geographic features..." There are many features; see below. But how to define "historical", etc? It would be ambiguous as to what can be derived. And I think we also need an approved list if allowed, e.g. once you have latitude and longitude values, there are a couple of free api like below.
+
+```
+geo_features = [
+    # Coordinates
+    sin_lat, cos_lat, sin_lon, cos_lon,
+    # Terrain
+    elevation, elev_mean_25km, elev_std_25km, elev_max_25km, slope_mean_25km,
+    # Climate, historical
+    mean_rain_selected_month, std_rain_selected_month, rainy_day_prob_selected_month,
+    mean_temp_selected_month,
+    # atmospheric state, historical
+    humidity, wind ...
+    # Broad land/water context
+    distance_to_coast, water_fraction_25km,
+]
+```
+
+### Fulankun1412 (Solafune Crew), posted 4 days ago
+
+Hi @hengck23, Thank you for your insight. In the wake of your inquiries regarding the need for a topic specifically to ask/request about whether additional sources [are allowed]. We decided to create a special Discussion thread pinned in the discussion panel. Please check it here. Best Regards.
+
+## Q&A: Rules clarification — permitted uses of the provided competition data
+
+am45k, posted 4 days ago
+
+Since external datasets are prohibited, I want to make sure I understand what counts as permitted use of the data distributed by this competition itself. Could you clarify which of the following are allowed?
+1. Using the training-set satellite imagery for purposes other than direct supervised training (e.g., unsupervised objectives, sanity checks, preprocessing development).
+2. Using the evaluation-set input imagery (the satellite tifs, not the placeholder targets) anywhere in model development — for example in preprocessing statistics or unsupervised objectives — given that these files were distributed to all participants.
+3. Computing dataset-level statistics (e.g., per-band normalization constants) from each split.
+
+No external data would be involved in any of these. Asking so that solutions stay clearly compliant ahead of the winners' code review — a short yes/no per item would be really helpful.
+
+### Fulankun1412 (Solafune Crew), posted 4 days ago
+
+Hi @am45k, Thanks for asking before the deadline. To answer each item:
+1. **Yes.** The training data may be used for any purpose within the competition — supervised or unsupervised objectives, sanity checks, preprocessing development, etc.
+2. **Yes.** The evaluation-set input imagery (satellite tifs) was distributed to all participants and may be used in model development, including preprocessing statistics and unsupervised objectives. The placeholder targets are excluded, and any attempt to reconstruct or estimate the true GPM-IMERG targets outside your model's prediction pipeline is not allowed.
+3. **Yes.** Dataset-level statistics such as per-band normalization constants may be computed from either split.
+
+As a reminder, no external data may be involved at any stage, and your winners' code submission must reproduce these steps (preprocessing/training/prediction modules). Good luck!
+
+## shafimiakhil: What we learned measuring our own nowcasting pipeline: three validation traps, and where the error actually lives
+
+Authors: Adeyinka Michael Sotunde (MICADEE) · Shafi Ullah Miakhil (shafimiakhil). Posted mid-competition, July 2026.
+
+Scope: all diagnostics on one pipeline ("ultimate-v2": ConvLSTM → Attention-UNet → FiLM, single head, log1p space, public LB 0.69325), not their best submission (ensemble, LB 0.68577). 5-fold location-holdout CV (StratifiedGroupKFold, seed 42), 40,686 train rows, 68,393,166 OOF pixels.
+
+**§1 The batch-averaging trap.** PyTorch Lightning's `self.log(..., on_epoch=True)` averages the metric over batches; since sqrt is concave, the mean of per-batch RMSEs is systematically lower (optimistic) than the pooled RMSE over all pixels at once. They claim "the leaderboard computes the pooled version" (sum SSE and N over the WHOLE validation set, one sqrt at the end) and that trusting the batch-averaged number cost them ~0.018 RMSE at model selection and once inverted an ablation's conclusion entirely (batch-avg said improved, pooled said worse).
+
+**§2 Fold RMSE mostly measures fold climatology.** Regressing per-fold RMSE against held-out-fold wetness: r=0.884–0.984, R²=0.78–0.97 across two of their pipelines. Their easiest fold (lowest RMSE) was simply the driest fold (90% exact zeros), not a "well-generalized" fold. They also flag: bihar and dhaka (their fold 4) look suspiciously near-zero-rain in this dataset (bihar: mean 0.00066mm, 99.57% zeros, p99=0.00 across 2023-2026 — surprising for the Indo-Gangetic monsoon plain), unverified.
+
+**§2c Early stopping fires on validation noise.** On their wettest fold, pooled val RMSE oscillated 1.60→1.74→2.84→5.83→1.71 across epochs while train loss fell monotonically; `patience=8` stopped at epoch 10 (still improving), `patience=15` reached real minima at epoch 14/21 with a large improvement.
+
+**§3 Error concentration.** dry(<0.05mm)=83.68% of pixels/5.1% of error; light(0.05-2mm)=12.19%/9.2%; heavy(≥2mm)=4.13%/85.7%. Cross-checked on a second architecture (SatUNet): 84.2% pooled / 82.8% fold0 — "two different models, same conclusion: the error concentration is a property of the data."
+
+**§4 Post-hoc calibration doesn't work (for them).** Binning by TRUE value shows fake "catastrophic under-prediction" at high truth (attenuation/regression-to-mean artifact, expected under squared loss). The correct diagnostic is binning by PREDICTED value and checking E[true|pred]≈pred — their model is roughly calibrated this way. Leave-one-fold-out isotonic recalibration: REJECTED (1.0914→1.0983, worse). Oracle isotonic (cheating, fit on test itself): only 0.8% gain. Conclusion: no monotone headroom once the model is genuinely calibrated — residual is conditional variance, not fixable bias.
+
+**§5 Heavy-rain loss weight is bias correction, not emphasis.** Removing a ×3 loss weight on heavy pixels cost +0.038 RMSE (not the <1% they expected). Mechanism: log-space Huber estimates ~median(log1p(Y)|x); expm1 maps that below E[Y|x]; the ×3 weight pushes it back up. Without the weight, global bias goes from −1.8% to −26.8% and every E[true|pred] bin becomes positive (systematic under-prediction).
+
+**§5a Prediction test (half-failed).** Predicted isotonic recal should now work on the no-×3 model (uniformly positive gaps = monotone-correctable). Honest leave-one-LOCATION-out test: FAILED — made both models worse (climatology transfer failure: fit on 2 dry locations, scored on 1 wet one, 10× rain-rate spread). Oracle (fit-on-scored-data) test: CONFIRMED — no-×3 model has ~4x the monotone headroom of the ×3 model. Conclusion: the bias is real and monotone, but a recalibration map does not transfer across climatologies (their fold-composition argument from §2, worn as a different hat).
+
+**§5b Decomposing the ×3's benefit carefully.** Two different questions give different %: "can recalibration replace the ×3?" → 85% (comparing recalibrated no-×3 vs raw ×3, an apples-to-oranges framing). "Is the ×3's benefit purely bias?" → comparing both models AFTER optimal recalibration, the residual gap (0.0135 of 0.0377 total benefit) cannot be removed by any monotone map → ~64% is bias-attributable, ~36% is something the ×3 does during training (capacity allocation toward the heavy-rain 4%) that no output-space correction can buy back.
+
+**§6 Input resolution.** Uniform 144×144 (stops downsampling Meteosat, but now upsamples Himawari 1.8x) was net negative (+0.024) but the per-sensor breakdown shows Meteosat's heavy-rain RMSE genuinely improved (5.03→4.68) while Himawari degraded more (+0.13) — a real resolution effect, just not uniformly beneficial. Caveat: confounded by differing epoch-of-best-checkpoint and n=1 Meteosat eval location in their fold 0.
+
+**§6a Per-sensor variable resolution: BatchNorm artifact, not a real result.** Variable-size batching forces sensor-homogeneous batches; result was much worse (1.1163→1.2500), but Himawari (whose resolution didn't even change) degraded just as much (+0.174, heavy predictions collapsed 5.016→2.711) — proof the damage is BatchNorm running-stats corruption from single-sensor batches, not a resolution effect. Conclusion: per-sensor native resolution is UNTESTED, would need GroupNorm/InstanceNorm or sensor-specific BN to test cleanly.
+
+**§7 Ceiling.** Discrimination is strong (×72.7 lift finding ≥10mm pixels among top-0.39% predictions; 37.1% of predicted maxima land within 5px of the true max, vs ~4.7% chance) but intensity is compressed ~4x (true≥10mm mean 16.25 → median prediction 4.17). Public LB top-10 (as of 2026-07-19) spans only 0.0156 (rank1 0.6295 → rank10 0.6452) against an official all-zero baseline of 0.91265 — "ten independent teams stacking inside ~2.5% of each other... is what an information ceiling looks like."
+
+**Their summary for practitioners:** (1) log pooled RMSE, not batch-averaged; (2) per-fold RMSE≈climatology, compare configs on a fixed fold, never crown a fold; (3) diagnose bias by binning on PREDICTED not TRUE; (4) check global bias if training in log space (a heavy weight may be silent bias correction); (5) ~4% of pixels carry ~86% of error; (6) verify variable-size-batch BatchNorm results on an unchanged sensor; (7) a post-hoc calibration map is climatology-specific, expect it to under-deliver vs in-sample estimates on a new-climate test set.
+
+## ccilabo: Count-0 areas in Clean Longwave IR data
+
+Posted 10 hours ago. Areas with Clean Longwave IR (B13/C13/ir_105) count=0 appear to overlap with intense precipitation zones in the distributed data. Suspected uint8 underflow: cloud-top temperatures for cumulonimbus rarely fall below the tropopause temperature, so a true physical zero should be extremely uncommon. Asks whether this occurs in the original raw data at the same locations, i.e. whether it's a genuine sensor value or a uint8 conversion artifact.
+
+## Bull: Tips for Improving Your Score
+
+Posted 10 hours ago. Organized measure-correctly → understand-your-errors → build-models → finish-strong.
+
+**Measure correctly:**
+1. "In our validation, the LB score behaves as 'RMSE computed per image, then averaged over images' (not a pooled RMSE computed over all pixels of all images at once)." Aligning local validation to this metric changes model-selection and ensemble-weighting decisions.
+2. GroupKFold by site is a must (train/test are disjoint in sites). Fold scores vary >2x between best/worst fold; treat ~±0.01 differences as noise; only trust improvements consistent across multiple folds.
+
+**Understand your errors:**
+3. Exhaustive EDA from every angle — visualize the worst-error images by eye, decompose by time-of-day (found a diurnal pattern: predicted amplitude shrinks at night since visible channels carry no information after dark). Warning: per-site/per-latitude patterns almost never reproduce under leave-one-site-out validation (too few sites) — don't trust findings whose sample size is "number of sites."
+4. Error-by-intensity-band decomposition: low-intensity is nearly worthless, the BULK of error lives in the mid "broadly wet" band (not the heavy tail). RMSE scales as squared-error×area, so improving moderate rain over a wide area pays more than nailing a few heavy-rain pixels. Estimate the error-budget share before working on any improvement.
+
+**Build models:**
+5. Loss: plain MSE in log1p space beat hurdle/Tweedie/Charbonnier/heavy-weighting in their tests — "loss engineering is an easy rabbit hole with little return," spend the time on EDA/ensembling instead.
+6. Single models plateau; the breakthrough is ensembling via greedy forward selection on pooled OOF (per-image RMSE) — a mediocre single-model CV can still contribute if weakly correlated with existing members. Save OOF predictions from the first experiment onward.
+7. The diversity that works is "different information" (longer past-time context, alternative temporal sampling), not "different architectures" looking at the same inputs (those saturate and get zero ensemble weight).
+
+**Finish strong:**
+8. Full-data retraining (all sites, no fold split) consistently improved LB after the config was fixed via CV.
+9. Their validation suggests the public LB behaves like a uniform random sample of the test set (no site/satellite/time structural bias found); estimated public–private absolute-score swing ≈ ±0.008 (95%), but pairwise model differences move together on the same image set so rank changes (shakeup) should be small. Pick final submissions by configs that make sense on both CV and LB, not by hairline (0.000x) public-score gaps.
+
+## peppamint & youjonathan: GOES band-count corruption is mostly in the evaluation split (instead of train)
+
+Posted 5 hours ago. Full census of GOES `.tif` frames in both splits, flagging a file corrupt unless it opens cleanly, has exactly 16 bands, and is 141×141.
+
+| Split | GOES frames | Malformed |
+| --- | ---: | ---: |
+| train | 30,788 | 10 |
+| evaluation | — | 42 |
+
+All 52 corrupt files open fine and have the correct 141×141 grid — the corruption is purely a missing-band problem: 30 files have only 4/16 bands, 3 have 12, 6 have 13, 3 have 14, 10 have 15.
+
+Evaluation failures cluster in exactly two eval locations — **upper_midwest (28 files)** and **rio_grande_do_sul (14 files)** — often on consecutive 10-minute timestamps (e.g. upper_midwest 2024-06-12 has a run of ~13 back-to-back 4-band frames), suggesting bad acquisition/ingest windows rather than random per-file damage. Train impact is small (10/30,788 ≈ 0.03%). Full per-file band-count list included in the post (also mirrored above under "GOES band-count corruption").
+
+## hannanfaisal: ImageNet-pretrained encoder weights
+
+Posted 2 hours ago. Asks whether ImageNet-pretrained encoder weights are allowed, or whether the external-data ban includes pretrained models. No organizer reply yet as of this capture.

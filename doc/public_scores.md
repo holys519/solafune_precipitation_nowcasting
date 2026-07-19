@@ -1,6 +1,6 @@
 # Public Scores
 
-Last updated: 2026-07-16
+Last updated: 2026-07-18
 
 This file tracks public/valid leaderboard scores for the Solafune precipitation nowcasting
 competition. Metric is RMSE, so lower is better.
@@ -15,32 +15,24 @@ Sources:
 
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
-| 1 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | + temporal smoothing (0.25/0.30/0.45) (**current best**, ~rank 24) |
-| 2 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | 2026/07/16 08:05:21 | valid | rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ |
-| 3 | exp036 | `exp036_per_satellite_blur1_thr0p2_patched.zip` | 0.6706858062196032 | 2026/07/16 06:48:24 | valid | OOF per-satellite blend + blur + threshold + patch; OOF予測−0.0032に対し実測−0.0013 |
-| 4 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | 2026/07/16 10:41:11 | valid | 50/50 equal_016_017 × exp018 blend + patch |
-| 5 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | exp024 equal_016_017 + exp014 overlap patch |
-| 6 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | 50/50-type seed-family blend + patch |
-| 7 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | Equal 5-way seed-family blend + patch |
-| 8 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | exp016/017 50/50 blend |
-| 9 | exp018 | `exp018_submission.zip` | 0.6929495140301676 | 2026/07/16 12:57:23 | valid | High-res localization (G-032), best single model |
-| 10 | exp024 | `exp024_blend_20_40_40.zip` | 0.693975964307325 | 2026/07/12 05:10:40 | valid | 20/40/40 exp009/016/017 blend |
-| 11 | exp024 | `exp024_equal_009_016_017.zip` | 0.6961199095679 | 2026/07/12 05:11:35 | valid | Equal exp009/016/017 blend |
-| 12 | exp014 | `exp014_submission.zip` | 0.6968727727408199 | 2026/07/10 12:44:13 | valid | Tile-Overlap GPM Copy Patch (post-processing on exp009 base, G-022) |
-| 13 | exp016 | `exp016_submission.zip` | 0.6977629323809645 | 2026/07/11 11:23:41 | valid | Hurdle log-normal head (G-030) |
-| 14 | exp017 | `exp017_submission.zip` | 0.6997414980565597 | 2026/07/11 11:24:23 | valid | Physics channels + wavelength alignment (G-031) |
-| 15 | exp015 | `exp015_submission.zip` | 0.7096658388930687 | 2026/07/10 08:47:38 | valid | Isotonic OOF Calibration on exp009 checkpoints (G-027a) |
-| 16 | exp009 | `exp009_submission.zip` | 0.7153438899106017 | 2026/07/09 12:38:39 | valid | Successor-Row Frames |
-| 17 | exp011 | `exp011_submission.zip` | 0.7232307883574975 | 2026/07/09 12:44:58 | valid | Satellite Adapter Two-Head |
-| 18 | exp008 | `exp008_submission.zip` | 0.7250185237499447 | 2026/07/09 12:36:08 | valid | Official Metric + Drizzle Post-Processing |
-| 19 | exp004 | `exp004_submission.zip` | 0.7252533726905589 | 2026/07/08 02:25:26 | valid | Two-Head Rain Detection + Amount Regression |
-| 20 | exp010 | `exp010_submission.zip` | 0.7348731115909746 | 2026/07/09 12:40:03 | valid | Data Cleanup Two-Head |
-| 21 | exp007 | `exp007_submission.zip` | 0.7362157342148196 | 2026/07/09 01:20:50 | valid | Multi-exp equal-weight ensemble |
-| 22 | exp005 | `exp005_submission.zip` | 0.7445524878914139 | 2026/07/08 02:36:58 | valid | Temporal fusion |
-| 23 | exp006 | `exp006_submission.zip` | 0.7450324204392412 | 2026/07/08 02:48:44 | valid | Satellite-specific adapter |
-| 24 | exp002 | `exp002_submission.zip` | 0.7479569114058262 | 2026/07/08 07:14:08 | valid | A100_exp002 |
-| 25 | exp003 | `exp003_submission.zip` | 0.7522576632294679 | 2026/07/08 09:40:50 | valid | A100_exp003 |
-| 26 | exp001 | `exp001_submission.zip` | 0.7531995875751526 | 2026/07/07 04:29:43 | valid | ローカル環境 |
+| 1 | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | overall tracked best; red (overlap patch) |
+| 2 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | 2026/07/17 10:27:20 | valid | 5-tap temporal smoothing + patch; red |
+| 3 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | 3-tap temporal smoothing + patch; red |
+| 4 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | 2026/07/16 08:05:21 | valid | rot90 TTA is effectively tied; red |
+| 5 | exp036 | `exp036_per_satellite_blur1_thr0p2_patched.zip` | 0.6706858062196032 | 2026/07/16 06:48:24 | valid | OOF blend + blur + threshold + patch; red |
+| 6 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | 2026/07/16 10:41:11 | valid | 50/50 blend + patch; red |
+| 7 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | blend + overlap patch; red |
+| 8 | exp042 | `exp042_5src_joint_raw.zip` | 0.6777841449591795 | 2026/07/19 09:40:47 | valid | 5-source blend + exp038_features, no patch (**amber champion**) |
+| 8b | exp039 | `exp039_4src_joint_raw.zip` | 0.6789588628265085 | 2026/07/18 12:14:31 | valid | no patch; amber sources; superseded by exp042 |
+| 9 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | seed-family blend + patch; red |
+| 10 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | 2026/07/17 10:27:45 | valid | no patch; amber sources and row smoothing |
+| 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | no patch; amber sources and row smoothing |
+| 12 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | equal seed-family blend + patch; red |
+| 13 | exp035 | `(recorded in E-3 audit)` | 0.6860146267326392 | — | valid | no_dilation model; amber |
+| 14 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | 2026/07/18 06:01:30 | valid | strict current-row-only green model (**strict champion**) |
+| 15 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | exp016/017 50/50 blend; amber |
+
+The complete chronological history is in `Submission Log` below.
 
 ## Submission Log
 
@@ -75,9 +67,12 @@ Sources:
 | 2026/07/17 10:34:09 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | holyholyholy | valid | 3-tap smoothing stack, no patch — patch value on this stack = 0.6834922402930078 - 0.6661746681900441 = 0.0173175721029637 |
 | 2026/07/17 11:58:12 | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | holyholyholy | valid | 4-source blend (+exp035_no_dilation, per-satellite weights) + joint postprocess + patch (**current best**). OOF predicted delta -0.00340 vs realized -0.00335 vs previous best — ~99% transfer, the highest-fidelity post-processing step measured so far |
 | 2026/07/18 12:14:31 | exp039 | `exp039_4src_joint_raw.zip` | 0.6789588628265085 | holyholyholy | valid | 4-source blend, no patch (amber champion). Patch value = 0.6789588628265085 - 0.6619116739607654 = 0.0170471888657431 — third consistent measurement (~0.017 across 3-way ladder, 3-way joint, 4-way joint) |
+| 2026/07/19 09:34:26 | exp038 | `exp038_features_submission.zip` | 0.6920702884151865 | holyholyholy | valid | current-row + wavelength-aligned physics (amber), standalone 5-fold. **OOF said this beats exp038 strict (fold0 0.28860 vs 0.28954, fold4 0.59336 vs 0.59607) but LB is WORSE than strict (0.69207 vs 0.68916, +0.0029)** — an OOF/LB inversion for the amber feature arm specifically; external-spec-derived band mapping may not generalize as well as it screens |
+| 2026/07/19 09:40:47 | exp042 | `exp042_5src_joint_raw.zip` | 0.6777841449591795 | holyholyholy | valid | 5-source blend (+exp038_features) + joint postprocess, no patch (**new amber champion**). vs exp039 4-source raw: -0.00117 realized (OOF predicted -0.0023, ~51% transfer) |
 | 2026/07/17 10:27:20 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | holyholyholy | valid | 5-tap ±60min smoothing (per-satellite) + blur 0.5 + per-satellite thresholds + patch (**current best**) |
 | 2026/07/17 10:27:45 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | holyholyholy | valid | same stack, no patch (amber track) — patch contribution = 0.6824222826340521 - 0.6652621793536686 = 0.0171601032803835 |
 | 2026/07/16 08:05:21 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | holyholyholy | valid | rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ |
+| 2026/07/18 06:01:30 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | holyholyholy | valid | strict current-row-only green model。exp011 strict比 −0.03407、strictチャンピオン更新 |
 
 ## Leaderboard Context (snapshot 2026-07-16, from the user)
 
@@ -122,7 +117,12 @@ not placement.
 
 ## Observations
 
-- **exp033_w018_050 (0.67199) is the current best**: mixing exp018 at 50% into
+- **exp038 (0.68916) is the strict/green champion**: exp011 strict比でOOF −0.01967、
+  Public −0.03407。exp018/exp035との0.003–0.007級の順位差は不安定なため、
+  `outputs/g_eda/exp007/TRANSFER_AUDIT.md` の群別・bootstrap監査を判断基準にする。
+- **exp039_4src_joint_patched (0.66191) is the overall tracked best**, but it is red because
+  it uses overlap patching; its raw 0.67896 counterpart is amber. exp033_w018_050 was the
+  earlier blend milestone: mixing exp018 at 50% into
   `equal_016_017` before the patch gains −0.00266 over exp026 — exp018 adds real diversity.
   The OOF-optimal mixture (weights, per-satellite variants, blur/threshold) is being computed
   in `g_eda/exp003`; `g_experiments/exp036` serves its recommendation.

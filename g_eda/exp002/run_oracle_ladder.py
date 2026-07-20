@@ -89,6 +89,10 @@ def ladder_metrics(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp-dir", required=True, help="e.g. ../../g_experiments/exp018")
+    parser.add_argument("--checkpoint-dir", default=None,
+                        help="g_model dir with best_model_fold*.pt, if different from --exp-dir's "
+                             "name (e.g. a config-arm variant like exp038_features that shares "
+                             "exp038's dataset.py/model.py but has its own g_model/ checkpoints)")
     parser.add_argument("--out-dir", default=str(PROJECT_DIR / "outputs" / "g_eda" / "exp002"))
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--num-workers", type=int, default=12)
@@ -96,7 +100,7 @@ def main() -> None:
     args = parser.parse_args()
 
     exp_dir = Path(args.exp_dir).resolve()
-    exp_name = exp_dir.name
+    exp_name = args.checkpoint_dir or exp_dir.name
     sys.path.insert(0, str(exp_dir))
     import dataset as dataset_mod  # noqa: E402
     import model as model_mod  # noqa: E402

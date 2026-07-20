@@ -15,7 +15,9 @@ Sources:
 
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
-| 1 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | 2026/07/19 10:10:12 | valid | overall best; red (overlap patch); 5-source blend + exp038_features |
+
+| 1 | exp044 | `exp044_5src_scalecorr_patched.zip` | 0.6568062148127412 | 2026/07/19 11:27:19 | valid | overall best; red; 5-source blend + per-satellite scale/blur/threshold correction (g_eda/exp003/run_scale_correction.py). OOF predicted only -0.00069 but realized -0.00399 vs exp042 (**578% transfer** — far above the historical 40-120% range for post-processing tweaks; per-satellite blur/threshold removal for goes/himawari may help eval far more than the OOF regime mix suggested) |
+| 1 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | 2026/07/19 10:10:12 | valid | superseded by exp044; red (overlap patch); 5-source blend + exp038_features |
 | 1b | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | red; superseded by exp042 |
 | 2 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | 2026/07/17 10:27:20 | valid | 5-tap temporal smoothing + patch; red |
 | 3 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | 3-tap temporal smoothing + patch; red |

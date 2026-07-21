@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="705" viewBox="0 0 1240 705">
+<style>
+text { font-family: Inter, DejaVu Sans, Arial, sans-serif; fill: #172033; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #64748b; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #64748b; }
+.value { font-size: 12px; font-weight: 600; }
+</style>
+<rect width="1240" height="705" fill="#ffffff"/>
+<text x="28" y="36" class="title">Full-size OOF tile RMSE by experiment</text>
+<text x="28" y="58" class="subtitle">Near-complete location-held-out OOF (&gt;=99% of 40,686 rows). Older schemas are backfilled from the E-3 audit.</text>
+<line x1="498.5" y1="84" x2="498.5" y2="648" stroke="#dbe3ee"/>
+<text x="498.5" y="677" text-anchor="middle" class="small">0.620</text>
+<line x1="782.6" y1="84" x2="782.6" y2="648" stroke="#dbe3ee"/>
+<text x="782.6" y="677" text-anchor="middle" class="small">0.640</text>
+<line x1="1066.7" y1="84" x2="1066.7" y2="648" stroke="#dbe3ee"/>
+<text x="1066.7" y="677" text-anchor="middle" class="small">0.660</text>
+<line x1="1350.8" y1="84" x2="1350.8" y2="648" stroke="#dbe3ee"/>
+<text x="1350.8" y="677" text-anchor="middle" class="small">0.680</text>
+<text x="1095" y="696" text-anchor="end" class="small">RMSE (lower is better)</text>
+<text x="238" y="110.5" text-anchor="end" class="label">exp003</text>
+<circle cx="1036.7" cy="106.5" r="5.5" fill="#7c3aed"/>
+<text x="1107" y="110.5" class="value">0.657891</text>
+<rect x="18" y="121.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="139.5" text-anchor="end" class="label">exp004</text>
+<circle cx="649.8" cy="135.5" r="5.5" fill="#7c3aed"/>
+<text x="1107" y="139.5" class="value">0.630651</text>
+<text x="238" y="168.5" text-anchor="end" class="label">exp005</text>
+<circle cx="1007.8" cy="164.5" r="5.5" fill="#7c3aed"/>
+<text x="1107" y="168.5" class="value">0.655853</text>
+<rect x="18" y="179.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="197.5" text-anchor="end" class="label">exp006</text>
+<circle cx="879.3" cy="193.5" r="5.5" fill="#7c3aed"/>
+<text x="1107" y="197.5" class="value">0.646806</text>
+<text x="238" y="226.5" text-anchor="end" class="label">exp008</text>
+<circle cx="649.8" cy="222.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="226.5" class="value">0.630651</text>
+<rect x="18" y="237.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="255.5" text-anchor="end" class="label">exp009</text>
+<circle cx="554.4" cy="251.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="255.5" class="value">0.623941</text>
+<text x="238" y="284.5" text-anchor="end" class="label">exp010</text>
+<circle cx="824.0" cy="280.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="284.5" class="value">0.642914</text>
+<rect x="18" y="295.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="313.5" text-anchor="end" class="label">exp011</text>
+<circle cx="680.3" cy="309.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="313.5" class="value">0.632798</text>
+<text x="238" y="342.5" text-anchor="end" class="label">exp012</text>
+<circle cx="521.4" cy="338.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="342.5" class="value">0.621613</text>
+<rect x="18" y="353.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="371.5" text-anchor="end" class="label">exp013</text>
+<circle cx="618.6" cy="367.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="371.5" class="value">0.628461</text>
+<text x="238" y="400.5" text-anchor="end" class="label">exp015</text>
+<circle cx="554.4" cy="396.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="400.5" class="value">0.623941</text>
+<rect x="18" y="411.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="429.5" text-anchor="end" class="label">exp016</text>
+<circle cx="478.7" cy="425.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="429.5" class="value">0.618607</text>
+<text x="238" y="458.5" text-anchor="end" class="label">exp017</text>
+<circle cx="445.7" cy="454.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="458.5" class="value">0.616285</text>
+<rect x="18" y="469.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="487.5" text-anchor="end" class="label">exp018</text>
+<circle cx="345.9" cy="483.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="487.5" class="value">0.609261</text>
+<text x="238" y="516.5" text-anchor="end" class="label">exp023/mean</text>
+<circle cx="602.8" cy="512.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="516.5" class="value">0.627344</text>
+<rect x="18" y="527.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="545.5" text-anchor="end" class="label">exp023/median</text>
+<circle cx="624.2" cy="541.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="545.5" class="value">0.628852</text>
+<text x="238" y="574.5" text-anchor="end" class="label">exp030</text>
+<circle cx="973.2" cy="570.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="574.5" class="value">0.653422</text>
+<title>training_folds=1 but checkpoint_count=5</title>
+<rect x="18" y="585.0" width="1204" height="29" fill="#f8fafc"/>
+<text x="238" y="603.5" text-anchor="end" class="label">exp035_no_dilation</text>
+<circle cx="308.3" cy="599.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="603.5" class="value">0.606612</text>
+<text x="238" y="632.5" text-anchor="end" class="label">exp038</text>
+<circle cx="400.9" cy="628.5" r="5.5" fill="#2563eb"/>
+<text x="1107" y="632.5" class="value">0.613131</text>
+</svg>

@@ -99,6 +99,8 @@ class HurdleLogNormalLoss(nn.Module):
         multiscale_weight_2: float = 0.0,
         multiscale_weight_4: float = 0.0,
         tile_mean_weight: float = 0.0,
+        metric_weight: float = 0.0,
+        metric_eps: float = 1e-6,
     ) -> None:
         super().__init__()
         self.rain_threshold = float(rain_threshold)
@@ -112,6 +114,8 @@ class HurdleLogNormalLoss(nn.Module):
         self.multiscale_weight_2 = float(multiscale_weight_2)
         self.multiscale_weight_4 = float(multiscale_weight_4)
         self.tile_mean_weight = float(tile_mean_weight)
+        self.metric_weight = float(metric_weight)
+        self.metric_eps = float(metric_eps)
 
     def forward(self, output: dict[str, torch.Tensor], target: torch.Tensor) -> torch.Tensor:
         if not isinstance(output, dict) or "mu" not in output:
@@ -161,6 +165,12 @@ class HurdleLogNormalLoss(nn.Module):
             pred_mean = output["pred"].float().mean(dim=(1, 2, 3))
             target_mean = target.mean(dim=(1, 2, 3))
             total = total + self.tile_mean_weight * F.mse_loss(pred_mean, target_mean)
+        if self.metric_weight > 0:
+            # The identified evaluator averages per-file RMSE, rather than taking one global
+            # pooled RMSE. This smooth epsilon keeps the derivative finite on exact matches.
+            diff2 = torch.square(output["pred"].float() - target)
+            tile_rmse = torch.sqrt(diff2.mean(dim=(1, 2, 3)) + self.metric_eps)
+            total = total + self.metric_weight * tile_rmse.mean()
         return total
 
 
@@ -180,6 +190,8 @@ def build_loss(config: dict) -> nn.Module:
             multiscale_weight_2=float(loss_cfg.get("multiscale_weight_2", 0.0)),
             multiscale_weight_4=float(loss_cfg.get("multiscale_weight_4", 0.0)),
             tile_mean_weight=float(loss_cfg.get("tile_mean_weight", 0.0)),
+            metric_weight=float(loss_cfg.get("metric_weight", 0.0)),
+            metric_eps=float(loss_cfg.get("metric_eps", 1e-6)),
         )
     if name == "two_head_rain":
         return TwoHeadRainLoss(

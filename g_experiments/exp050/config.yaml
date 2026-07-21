@@ -1,0 +1,101 @@
+experiment:
+  name: exp050
+  description: "STRICT baseline + split-window BTD (12.3um spl - 10.5um win, plain difference, not the ratio SPL/(win+1) used in the existing `engineered` feature). Literature-standard atmospheric-moisture discriminator (doc/domain_knowledge_review_2026-07-20.md section 2.3). Ablation: does the textbook difference form beat the quantization-resistant ratio form used elsewhere in this project?"
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 1
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+  drop_zero_obs_rows: true
+
+features:
+  canonical_bands: false
+  engineered: false
+  temporal_abs: false
+  target_time_first: false
+  ir_rain_proxy: false
+  split_window_btd: true
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 100
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: highres_hurdle_lognormal_unet
+  in_channels: 57
+  base_channels: 32
+  internal_size: 128
+  aux_mask_enabled: true
+  clip_min: 0.0
+  sigma_mode: predicted
+  fixed_sigma: 1.0
+  mu_min: -6.0
+  mu_max: 5.0
+  sigma_min: 0.1
+  sigma_max: 2.0
+  amount_cap: 150.0
+  serving_sigma_scale: 1.0
+  bottleneck_dilations: []
+
+loss:
+  name: hurdle_lognormal
+  rain_threshold: 0.0
+  bce_weight: 1.0
+  intensity_weight: 1.0
+  prediction_weight: 0.0
+  min_wet_target: 0.01
+  aux_mask_weight: 0.2
+  aux_mask_threshold: 0.25
+  aux_dice_weight: 0.5
+  multiscale_weight_2: 0.2
+  multiscale_weight_4: 0.1
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp050/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp050
+  output_dir: ../../outputs/submissions/exp050
+  submission_zip: ../../outputs/submissions/exp050_submission.zip
+  analysis_dir: ../../outputs/analysis/exp050
+  norm_stats: norm_stats.json

@@ -1,0 +1,35 @@
+submitted_at,run,experiment,submission,public_rmse,status,risk,memo,source
+2026-07-07 04:29:43,exp001,exp001,exp001_submission.zip,0.7531995875751526,valid,green,ローカル環境,doc/public_scores.md#submission-log
+2026-07-07 11:20:13,exp001,exp001,exp001_submission.zip,0.7937729717031525,valid,green,A100テスト (reference),doc/public_scores.md#submission-log
+2026-07-08 02:25:26,exp004,exp004,exp004_submission.zip,0.7252533726905589,valid,green,Two-Head Rain Detection + Amount Regression,doc/public_scores.md#submission-log
+2026-07-08 02:36:58,exp005,exp005,exp005_submission.zip,0.7445524878914139,valid,green,Temporal fusion,doc/public_scores.md#submission-log
+2026-07-08 02:48:44,exp006,exp006,exp006_submission.zip,0.7450324204392412,valid,green,Satellite-specific adapter,doc/public_scores.md#submission-log
+2026-07-08 07:14:08,exp002,exp002,exp002_submission.zip,0.7479569114058262,valid,green,A100_exp002,doc/public_scores.md#submission-log
+2026-07-08 09:40:50,exp003,exp003,exp003_submission.zip,0.7522576632294679,valid,green,A100_exp003,doc/public_scores.md#submission-log
+2026-07-09 01:20:50,exp007,exp007,exp007_submission.zip,0.7362157342148196,valid,green,Multi-exp equal-weight ensemble,doc/public_scores.md#submission-log
+2026-07-09 12:36:08,exp008,exp008,exp008_submission.zip,0.7250185237499447,valid,green,Official Metric + Drizzle Post-Processing,doc/public_scores.md#submission-log
+2026-07-09 12:38:39,exp009,exp009,exp009_submission.zip,0.7153438899106017,valid,amber,Successor-Row Frames,doc/public_scores.md#submission-log
+2026-07-09 12:40:03,exp010,exp010,exp010_submission.zip,0.7348731115909746,valid,green,Data Cleanup Two-Head,doc/public_scores.md#submission-log
+2026-07-09 12:44:58,exp011,exp011,exp011_submission.zip,0.7232307883574975,valid,green,Satellite Adapter Two-Head,doc/public_scores.md#submission-log
+2026-07-10 08:47:38,exp015,exp015,exp015_submission.zip,0.7096658388930687,valid,amber,Isotonic OOF Calibration on exp009 checkpoints (G-027a),doc/public_scores.md#submission-log
+2026-07-10 12:44:13,exp014,exp014,exp014_submission.zip,0.6968727727408199,valid,red,"Tile-Overlap GPM Copy Patch (post-processing on exp009 base, G-022)",doc/public_scores.md#submission-log
+2026-07-11 11:23:41,exp016,exp016,exp016_submission.zip,0.6977629323809645,valid,amber,Hurdle log-normal head (G-030),doc/public_scores.md#submission-log
+2026-07-11 11:24:23,exp017,exp017,exp017_submission.zip,0.6997414980565597,valid,amber,Physics channels + wavelength alignment (G-031),doc/public_scores.md#submission-log
+2026-07-12 05:10:40,exp024,exp024,exp024_blend_20_40_40.zip,0.693975964307325,valid,amber,20/40/40 exp009/016/017 blend,doc/public_scores.md#submission-log
+2026-07-12 05:11:35,exp024,exp024,exp024_equal_009_016_017.zip,0.6961199095679,valid,amber,Equal exp009/016/017 blend,doc/public_scores.md#submission-log
+2026-07-12 05:13:36,exp024,exp024,exp024_equal_016_017.zip,0.6919274860606568,valid,amber,exp016/017 50/50 blend,doc/public_scores.md#submission-log
+2026-07-13 12:01:55,exp026,exp026,exp026_submission.zip,0.6746506841387548,valid,red,exp024 equal_016_017 + exp014 overlap patch,doc/public_scores.md#submission-log
+2026-07-13 12:02:26,exp027,exp027,exp027_equal_all_patched.zip,0.6849224439171961,valid,red,Equal 5-way seed-family blend + patch,doc/public_scores.md#submission-log
+2026-07-13 12:02:46,exp027,exp027,exp027_half016_half017family_patched.zip,0.6806568162687938,valid,red,50/50-type seed-family blend + patch,doc/public_scores.md#submission-log
+2026-07-16 06:48:24,exp036,exp036,exp036_per_satellite_blur1_thr0p2_patched.zip,0.6706858062196032,valid,red,OOF per-satellite blend + blur + threshold + patch; OOF予測−0.0032に対し実測−0.0013,doc/public_scores.md#submission-log
+2026-07-16 07:33:53,exp036,exp036,exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip,0.6661746681900441,valid,red,"+ temporal smoothing (0.25/0.30/0.45) (current best, ~rank 24)",doc/public_scores.md#submission-log
+2026-07-16 08:05:21,exp037,exp037,exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip,0.666259584999578,valid,red,rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ,doc/public_scores.md#submission-log
+2026-07-16 10:41:11,exp033,exp033,exp033_w018_050_patched.zip,0.671989922822016,valid,red,50/50 equal_016_017 × exp018 blend + patch,doc/public_scores.md#submission-log
+2026-07-16 12:57:23,exp018,exp018,exp018_submission.zip,0.6929495140301676,valid,amber,"High-res localization (G-032), best single model",doc/public_scores.md#submission-log
+2026-07-17 10:27:20,exp036,exp036,exp036_per_satellite_blur0p5_joint_patched.zip,0.6652621793536686,valid,red,5-tap ±60min smoothing (per-satellite) + blur 0.5 + per-satellite thresholds + patch (current best),doc/public_scores.md#submission-log
+2026-07-17 10:27:45,exp036,exp036,exp036_per_satellite_blur0p5_joint_raw.zip,0.6824222826340521,valid,amber,"same stack, no patch (amber track) — patch contribution = 0.6824222826340521 - 0.6652621793536686 = 0.0171601032803835",doc/public_scores.md#submission-log
+2026-07-17 10:34:09,exp036,exp036,exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip,0.6834922402930078,valid,amber,"3-tap smoothing stack, no patch — patch value on this stack = 0.6834922402930078 - 0.6661746681900441 = 0.0173175721029637",doc/public_scores.md#submission-log
+2026-07-17 11:58:12,exp039,exp039,exp039_4src_joint_patched.zip,0.6619116739607654,valid,red,"4-source blend (+exp035_no_dilation, per-satellite weights) + joint postprocess + patch (current best). OOF predicted delta -0.00340 vs realized -0.00335 vs previous best — ~99% transfer, the highest-fidelity post-processing step measured so far",doc/public_scores.md#submission-log
+2026-07-18 06:01:30,exp038,exp038,exp038_submission.zip,0.6891638997287517,valid,green,strict current-row-only green model。exp011 strict比 −0.03407、strictチャンピオン更新,doc/public_scores.md#submission-log
+2026-07-18 12:14:31,exp039,exp039,exp039_4src_joint_raw.zip,0.6789588628265085,valid,amber,"4-source blend, no patch (amber champion). Patch value = 0.6789588628265085 - 0.6619116739607654 = 0.0170471888657431 — third consistent measurement (~0.017 across 3-way ladder, 3-way joint, 4-way joint)",doc/public_scores.md#submission-log
+,exp035_no_dilation,exp035,(recorded in E-3 audit),0.6860146267326392,valid,amber,Timestamp/submission name missing from public_scores.md,outputs/l_eda/exp003/cv_lb_pairs.csv

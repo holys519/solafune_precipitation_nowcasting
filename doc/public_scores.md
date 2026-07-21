@@ -1,6 +1,23 @@
 # Public Scores
 
-Last updated: 2026-07-18
+Last updated: 2026-07-20
+
+**【2026-07-20 公式裁定・完全版】** 運営の公式アナウンス投稿で全項目が確定した。詳細は
+`doc/submission_registry.md`。要点:
+- successor row入力 (context_rows: 2) 禁止確定 — T以降のobservationは一切不可
+- 予測後処理の時間方向平滑化は **causal (対象が全てT以下) のみ許可**、non-causal (未来の対象
+  時刻の予測を混ぜる) は禁止 — exp036/exp037のbidirectional設計はこれ単独でもred
+- overlap patchによるeval復元は reverse engineering として完全禁止確定
+- 自己回帰的な自分の過去予測の再利用、causal-onlyの平滑化は明確に許可 (新しい green の道)
+- 学習時のみ未来フレームを補助教師信号に使うのは可 (推論入力がcausalなら問題なし)
+- 勝者はコード検査で「T時点までのデータに切り詰めて再実行→提出結果と一致するか」を検証される
+- deadlineは運営アナウンス日から1週間延長 (実質2026-08-03頃、要最終確認)
+
+**このtableの多くの上位スコアはsuccessor row由来のred分類となり最終提出には使えない** —
+rank 1つずつに `[ELIGIBLE]` / `[RED]` を付記した。**2026-07-20の裁定後、初のgreen専用結果が出た:
+exp046_causal_smoothed (0.68891) がexp038 (0.68916) をわずかに更新し、新しいeligible green
+champion**。exp040_metric単体 (0.69552) はexp038単体より劣るが、Track G3ブレンド用の
+アーキテクチャ多様性の2本目としての価値は別途評価する。
 
 This file tracks public/valid leaderboard scores for the Solafune precipitation nowcasting
 competition. Metric is RMSE, so lower is better.
@@ -16,24 +33,26 @@ Sources:
 | Rank | Experiment | Submission | Public RMSE | Submitted at | Status | Notes |
 | ---: | --- | --- | ---: | --- | --- | --- |
 
-| 1 | exp044 | `exp044_5src_scalecorr_patched.zip` | 0.6568062148127412 | 2026/07/19 11:27:19 | valid | overall best; red; 5-source blend + per-satellite scale/blur/threshold correction (g_eda/exp003/run_scale_correction.py). OOF predicted only -0.00069 but realized -0.00399 vs exp042 (**578% transfer** — far above the historical 40-120% range for post-processing tweaks; per-satellite blur/threshold removal for goes/himawari may help eval far more than the OOF regime mix suggested) |
-| 1 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | 2026/07/19 10:10:12 | valid | superseded by exp044; red (overlap patch); 5-source blend + exp038_features |
-| 1b | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | red; superseded by exp042 |
-| 2 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | 2026/07/17 10:27:20 | valid | 5-tap temporal smoothing + patch; red |
-| 3 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | 3-tap temporal smoothing + patch; red |
-| 4 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | 2026/07/16 08:05:21 | valid | rot90 TTA is effectively tied; red |
-| 5 | exp036 | `exp036_per_satellite_blur1_thr0p2_patched.zip` | 0.6706858062196032 | 2026/07/16 06:48:24 | valid | OOF blend + blur + threshold + patch; red |
-| 6 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | 2026/07/16 10:41:11 | valid | 50/50 blend + patch; red |
-| 7 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | blend + overlap patch; red |
-| 8 | exp042 | `exp042_5src_joint_raw.zip` | 0.6777841449591795 | 2026/07/19 09:40:47 | valid | 5-source blend + exp038_features, no patch (**amber champion**) |
-| 8b | exp039 | `exp039_4src_joint_raw.zip` | 0.6789588628265085 | 2026/07/18 12:14:31 | valid | no patch; amber sources; superseded by exp042 |
-| 9 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | seed-family blend + patch; red |
-| 10 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | 2026/07/17 10:27:45 | valid | no patch; amber sources and row smoothing |
-| 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | no patch; amber sources and row smoothing |
-| 12 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | equal seed-family blend + patch; red |
-| 13 | exp035 | `(recorded in E-3 audit)` | 0.6860146267326392 | — | valid | no_dilation model; amber |
-| 14 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | 2026/07/18 06:01:30 | valid | strict current-row-only green model (**strict champion**) |
-| 15 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | exp016/017 50/50 blend; amber |
+| 1 | exp044 | `exp044_5src_scalecorr_patched.zip` | 0.6568062148127412 | 2026/07/19 11:27:19 | valid | **[RED — 2026-07-20確定, 最終提出不可]** successor-row sources (exp016/017/018/035) + overlap patch. OOF predicted only -0.00069 but realized -0.00399 vs exp042 (578% transfer, unexplained) |
+| 1 | exp042 | `exp042_5src_joint_patched.zip` | 0.6607936278488564 | 2026/07/19 10:10:12 | valid | **[RED]** superseded by exp044; successor-row sources + overlap patch |
+| 1b | exp039 | `exp039_4src_joint_patched.zip` | 0.6619116739607654 | 2026/07/17 11:58:12 | valid | **[RED]** successor-row sources + overlap patch |
+| 2 | exp036 | `exp036_per_satellite_blur0p5_joint_patched.zip` | 0.6652621793536686 | 2026/07/17 10:27:20 | valid | **[RED]** successor-row sources + row smoothing + patch |
+| 3 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.6661746681900441 | 2026/07/16 07:33:53 | valid | **[RED]** successor-row sources + row smoothing + patch |
+| 4 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | 2026/07/16 08:05:21 | valid | **[RED]** rot90 TTA tied; successor-row sources + patch |
+| 5 | exp036 | `exp036_per_satellite_blur1_thr0p2_patched.zip` | 0.6706858062196032 | 2026/07/16 06:48:24 | valid | **[RED]** successor-row sources + patch |
+| 6 | exp033 | `exp033_w018_050_patched.zip` | 0.671989922822016 | 2026/07/16 10:41:11 | valid | **[RED]** successor-row sources + patch |
+| 7 | exp026 | `exp026_submission.zip` | 0.6746506841387548 | 2026/07/13 12:01:55 | valid | **[RED]** successor-row sources + overlap patch |
+| 8 | exp042 | `exp042_5src_joint_raw.zip` | 0.6777841449591795 | 2026/07/19 09:40:47 | valid | **[RED — 2026-07-20確定]** successor-row sources (no patch, but still red on its own) |
+| 8b | exp039 | `exp039_4src_joint_raw.zip` | 0.6789588628265085 | 2026/07/18 12:14:31 | valid | **[RED — 2026-07-20確定]** successor-row sources |
+| 9 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | **[RED]** successor-row sources + patch |
+| 10 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | 2026/07/17 10:27:45 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
+| 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
+| 12 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | **[RED]** successor-row sources + patch |
+| 13 | exp035 | `(recorded in E-3 audit)` | 0.6860146267326392 | — | valid | **[RED — 2026-07-20確定]** context_rows: 2 |
+| 14 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | 2026/07/20 01:31:56 | valid | **[ELIGIBLE — new green champion]** exp038 + causal-only temporal smoothing (center=0.85/prev=0.15, next=0, untuned). Beats exp038 solo by -0.00025 -- confirms causal smoothing (permitted 2026-07-20) has real, if small, value even with un-tuned weights |
+| 15 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | 2026/07/18 06:01:30 | valid | **[ELIGIBLE]** strict current-row-only green model, context_rows: 1; superseded by exp046 |
+| 16 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | **[RED — 2026-07-20確定]** exp016/017 blend, both context_rows: 2 |
+| 17 | exp040_metric | `exp040_metric_submission.zip` | 0.6955180267195701 | 2026/07/20 01:32:36 | valid | **[ELIGIBLE]** standalone green model, architecturally distinct from exp038 (metric_weight=0.6 tile-RMSE-shaped loss). Weaker solo than exp038/exp046, but intended as the 2nd model for Track G3 green-blend diversity, not a solo champion |
 
 The complete chronological history is in `Submission Log` below.
 
@@ -77,6 +96,8 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/17 10:27:45 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | holyholyholy | valid | same stack, no patch (amber track) — patch contribution = 0.6824222826340521 - 0.6652621793536686 = 0.0171601032803835 |
 | 2026/07/16 08:05:21 | exp037 | `exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip` | 0.666259584999578 | holyholyholy | valid | rot90 TTA A/B: +0.00008の完全なタイ → TTA無効と判定、exp037クローズ |
 | 2026/07/18 06:01:30 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | holyholyholy | valid | strict current-row-only green model。exp011 strict比 −0.03407、strictチャンピオン更新 |
+| 2026/07/20 01:31:56 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | holyholyholy | valid | exp038 + causal-only時間平滑化 (2026-07-20裁定で許可、center=0.85/prev=0.15/next=0、未チューニング)。exp038単体比 -0.00025で**新green champion** |
+| 2026/07/20 01:32:36 | exp040_metric | `exp040_metric_submission.zip` | 0.6955180267195701 | holyholyholy | valid | 単体green model (metric_weight=0.6のtile-RMSE整形損失)。exp038/exp046より単体では劣るが、Track G3のブレンド用アーキテクチャ多様性として評価予定 |
 
 ## Leaderboard Context (snapshot 2026-07-16, from the user)
 

@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-18T06:51:03.718078+00:00",
+  "full_oof_samples": 40686,
+  "cv_rows": 22,
+  "fold_rows": 110,
+  "public_rows": 34,
+  "experiments": 40,
+  "sources": [
+    "outputs/analysis/**/analysis_summary*.json",
+    "g_model/**/metrics*.json",
+    "doc/public_scores.md#Submission-Log",
+    "outputs/l_eda/exp003/cv_lb_pairs.csv",
+    "outputs/l_eda/exp003/calibration_stats.json"
+  ]
+}

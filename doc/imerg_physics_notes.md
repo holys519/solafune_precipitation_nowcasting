@@ -6,7 +6,8 @@
 
 *関連: `doc/discussion_insights.md` (ディスカッション由来の知見)、
 `discussion/geocoding_coordinates_ja.md` (座標変換の公式ルーリング)、
-`g_eda/exp005` (本ノートの仮説を検証するEDA)。*
+`g_eda/exp005` (本ノートの仮説を検証するEDA)、
+`doc/domain_knowledge_review_2026-07-20.md` (外部文献による裏付け・未実施候補の棚卸し)。*
 
 ---
 
@@ -103,8 +104,8 @@ train/evalの空間重複 (3ペア) はexp014系で回収済み。**時間方向
 | --- | --- | --- | --- |
 | H1 二状態 | **棄却** | イノベーション分布は単調減衰 (二峰性なし)。高イノベーション間隔は30分が支配的 (4715/7847) — PMW再訪の準周期でなく対流の連続発達 | フレーム状態による適応平滑化は見送り。静的重みを維持 |
 | H2 移流 | **保留→実用形で再検証中** | シフトによる相関ゲイン+0.139・53%のペアで非ゼロシフトは実在。ただし初回のRMSE比較はnp.rollの巻き込みで無効 | `g_eda/exp004/run_advected_smoothing.py`: 予測同士のアラインメント (evalでも同じ手順が可能) で静的平滑化とA/B |
-| H3 視差幾何 | **Himawariで確証** | 方向コサイン0.81 (aceh: 幾何(-0.3,-3.3) vs 実測(-1,-3) 等)。GOESは経験シフト自体が~0 (直下点近傍)。MeteosatはIODC 45.5°Eの方が整合するがR²負 | `eval_parallax_prior.csv`: **Himawari評価地点のみ**登録補正の外挿を信頼 (kanto (-2.2,-0.1) 等)。Round 6の入力レジストレーション候補 |
-| E-9 日周期 | **確証** | GOES圏: 振幅0.136・16時ピーク (陸上午後対流)。Himawari圏: 4時ピーク (海洋性早朝雨)。Meteosat圏: 0.042・16時 | local solar hour sin/cos をRound 6入力へ (閉形式・許可済み)。座標はGeoNames経由で正規化取得すること |
+| H3 視差幾何 | 幾何自体は**Himawariで確証**だが、**モデルへの適用(exp045)はfold0/4ゲートで棄却 (2026-07-21)** | 方向コサイン0.81 (aceh: 幾何(-0.3,-3.3) vs 実測(-1,-3) 等)。GOESは経験シフト自体が~0 (直下点近傍)。MeteosatはIODC 45.5°Eの方が整合するがR²負。**しかしexp045 (exp038 strict + Himawari registration) はfold0 +0.00256・fold4 +0.01540と両fold悪化** | 幾何予測は正しいが、レジストレーション後の画素シフトを入力に直接適用する実装では効果が出なかった (もしくは逆効果)。5-foldへの拡張・最終ブレンドへの採用は見送り。原因未診断 (シフト量が小さすぎる/補間方法/他の入力とのミスアラインの可能性) |
+| E-9 日周期 | **確証、exp047で実装・fold0/4ゲート投入済み (2026-07-21)** | GOES圏: 振幅0.136・16時ピーク (陸上午後対流)。Himawari圏: 4時ピーク (海洋性早朝雨)。Meteosat圏: 0.042・16時 | local solar hour sin/cos + hemisphere + day-of-year sin/cos (5ch) をexp038 strict baseに追加。座標はNominatim経由で凍結取得・記録済み (`g_eda/exp005/geocoded_locations.csv`)。生の緯度経度は特徴に含めない (訓練地域気候の暗記回避) |
 
 補足: lag1自己相関の衛星差 (him 0.728 / goes 0.689 / met 0.522) は、jointスイープが
 Meteosatの±60分タップを軽く選んだ事実と整合 — 平滑化重みの衛星別化は物理的に正しい。

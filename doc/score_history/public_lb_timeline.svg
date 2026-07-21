@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="720" viewBox="0 0 1360 720">
+<style>
+text { font-family: Inter, DejaVu Sans, Arial, sans-serif; fill: #172033; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #64748b; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #64748b; }
+.value { font-size: 12px; font-weight: 600; }
+</style>
+<rect width="1360" height="720" fill="#ffffff"/>
+<text x="28" y="36" class="title">Public leaderboard submission history</text>
+<text x="28" y="58" class="subtitle">Every recorded valid submission; red line is best-so-far. Risk colors: green / amber / red under the current rules audit.</text>
+<line x1="82" y1="253.8" x2="1318" y2="253.8" stroke="#dbe3ee"/>
+<text x="72" y="257.8" text-anchor="end" class="small">0.700</text>
+<line x1="82" y1="437.3" x2="1318" y2="437.3" stroke="#dbe3ee"/>
+<text x="72" y="441.3" text-anchor="end" class="small">0.750</text>
+<line x1="82" y1="620.8" x2="1318" y2="620.8" stroke="#dbe3ee"/>
+<text x="72" y="624.8" text-anchor="end" class="small">0.800</text>
+<polyline points="82.0,449.1 120.6,449.1 159.2,346.5 197.9,346.5 236.5,346.5 275.1,346.5 313.8,346.5 352.4,346.5 391.0,345.6 429.6,310.1 468.2,310.1 506.9,310.1 545.5,289.3 584.1,242.3 622.8,242.3 661.4,242.3 700.0,231.7 738.6,231.7 777.2,224.2 815.9,160.8 854.5,160.8 893.1,160.8 931.8,146.2 970.4,129.7 1009.0,129.7 1047.6,129.7 1086.2,129.7 1124.9,126.3 1163.5,126.3 1202.1,126.3 1240.8,114.0 1279.4,114.0 1318.0,114.0" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+<circle cx="82.0" cy="449.1" r="5" fill="#059669"><title>exp001 exp001_submission.zip 0.7531995875751526</title></circle>
+<text x="87.0" y="440.1" class="small">exp001 0.7532</text>
+<text x="82.0" y="645" text-anchor="end" transform="rotate(-42 82.0 645)" class="small">2026-07-07</text>
+<circle cx="120.6" cy="598.0" r="5" fill="#059669"><title>exp001 exp001_submission.zip 0.7937729717031525</title></circle>
+<circle cx="159.2" cy="346.5" r="5" fill="#059669"><title>exp004 exp004_submission.zip 0.7252533726905589</title></circle>
+<text x="164.2" y="337.5" class="small">exp004 0.7253</text>
+<circle cx="197.9" cy="417.3" r="5" fill="#059669"><title>exp005 exp005_submission.zip 0.7445524878914139</title></circle>
+<circle cx="236.5" cy="419.1" r="5" fill="#059669"><title>exp006 exp006_submission.zip 0.7450324204392412</title></circle>
+<text x="236.5" y="645" text-anchor="end" transform="rotate(-42 236.5 645)" class="small">2026-07-08</text>
+<circle cx="275.1" cy="429.8" r="5" fill="#059669"><title>exp002 exp002_submission.zip 0.7479569114058262</title></circle>
+<circle cx="313.8" cy="445.6" r="5" fill="#059669"><title>exp003 exp003_submission.zip 0.7522576632294679</title></circle>
+<circle cx="352.4" cy="386.7" r="5" fill="#059669"><title>exp007 exp007_submission.zip 0.7362157342148196</title></circle>
+<circle cx="391.0" cy="345.6" r="5" fill="#059669"><title>exp008 exp008_submission.zip 0.7250185237499447</title></circle>
+<text x="391.0" y="645" text-anchor="end" transform="rotate(-42 391.0 645)" class="small">2026-07-09</text>
+<circle cx="429.6" cy="310.1" r="5" fill="#d97706"><title>exp009 exp009_submission.zip 0.7153438899106017</title></circle>
+<text x="434.6" y="301.1" class="small">exp009 0.7153</text>
+<circle cx="468.2" cy="381.8" r="5" fill="#059669"><title>exp010 exp010_submission.zip 0.7348731115909746</title></circle>
+<circle cx="506.9" cy="339.1" r="5" fill="#059669"><title>exp011 exp011_submission.zip 0.7232307883574975</title></circle>
+<circle cx="545.5" cy="289.3" r="5" fill="#d97706"><title>exp015 exp015_submission.zip 0.7096658388930687</title></circle>
+<text x="550.5" y="280.3" class="small">exp015 0.7097</text>
+<text x="545.5" y="645" text-anchor="end" transform="rotate(-42 545.5 645)" class="small">2026-07-10</text>
+<circle cx="584.1" cy="242.3" r="5" fill="#dc2626"><title>exp014 exp014_submission.zip 0.6968727727408199</title></circle>
+<text x="589.1" y="233.3" class="small">exp014 0.6969</text>
+<circle cx="622.8" cy="245.6" r="5" fill="#d97706"><title>exp016 exp016_submission.zip 0.6977629323809645</title></circle>
+<circle cx="661.4" cy="252.9" r="5" fill="#d97706"><title>exp017 exp017_submission.zip 0.6997414980565597</title></circle>
+<circle cx="700.0" cy="231.7" r="5" fill="#d97706"><title>exp024 exp024_blend_20_40_40.zip 0.693975964307325</title></circle>
+<text x="700.0" y="645" text-anchor="end" transform="rotate(-42 700.0 645)" class="small">2026-07-12</text>
+<circle cx="738.6" cy="239.6" r="5" fill="#d97706"><title>exp024 exp024_equal_009_016_017.zip 0.6961199095679</title></circle>
+<circle cx="777.2" cy="224.2" r="5" fill="#d97706"><title>exp024 exp024_equal_016_017.zip 0.6919274860606568</title></circle>
+<circle cx="815.9" cy="160.8" r="5" fill="#dc2626"><title>exp026 exp026_submission.zip 0.6746506841387548</title></circle>
+<text x="820.9" y="151.8" class="small">exp026 0.6747</text>
+<circle cx="854.5" cy="198.5" r="5" fill="#dc2626"><title>exp027 exp027_equal_all_patched.zip 0.6849224439171961</title></circle>
+<text x="854.5" y="645" text-anchor="end" transform="rotate(-42 854.5 645)" class="small">2026-07-13</text>
+<circle cx="893.1" cy="182.8" r="5" fill="#dc2626"><title>exp027 exp027_half016_half017family_patched.zip 0.6806568162687938</title></circle>
+<circle cx="931.8" cy="146.2" r="5" fill="#dc2626"><title>exp036 exp036_per_satellite_blur1_thr0p2_patched.zip 0.6706858062196032</title></circle>
+<circle cx="970.4" cy="129.7" r="5" fill="#dc2626"><title>exp036 exp036_per_satellite_sm0p25_blur1_thr0p2_patched.zip 0.6661746681900441</title></circle>
+<text x="975.4" y="120.7" class="small">exp036 0.6662</text>
+<circle cx="1009.0" cy="130.0" r="5" fill="#dc2626"><title>exp037 exp037_per_satellite_sm0p25_blur1_thr0p2_patched.zip 0.666259584999578</title></circle>
+<text x="1009.0" y="645" text-anchor="end" transform="rotate(-42 1009.0 645)" class="small">2026-07-16</text>
+<circle cx="1047.6" cy="151.0" r="5" fill="#dc2626"><title>exp033 exp033_w018_050_patched.zip 0.671989922822016</title></circle>
+<circle cx="1086.2" cy="227.9" r="5" fill="#d97706"><title>exp018 exp018_submission.zip 0.6929495140301676</title></circle>
+<circle cx="1124.9" cy="126.3" r="5" fill="#dc2626"><title>exp036 exp036_per_satellite_blur0p5_joint_patched.zip 0.6652621793536686</title></circle>
+<circle cx="1163.5" cy="189.3" r="5" fill="#d97706"><title>exp036 exp036_per_satellite_blur0p5_joint_raw.zip 0.6824222826340521</title></circle>
+<text x="1163.5" y="645" text-anchor="end" transform="rotate(-42 1163.5 645)" class="small">2026-07-17</text>
+<circle cx="1202.1" cy="193.2" r="5" fill="#d97706"><title>exp036 exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip 0.6834922402930078</title></circle>
+<circle cx="1240.8" cy="114.0" r="5" fill="#dc2626"><title>exp039 exp039_4src_joint_patched.zip 0.6619116739607654</title></circle>
+<circle cx="1279.4" cy="214.0" r="5" fill="#059669"><title>exp038 exp038_submission.zip 0.6891638997287517</title></circle>
+<circle cx="1318.0" cy="176.6" r="5" fill="#d97706"><title>exp039 exp039_4src_joint_raw.zip 0.6789588628265085</title></circle>
+<text x="1318.0" y="645" text-anchor="end" transform="rotate(-42 1318.0 645)" class="small">2026-07-18</text>
+<text x="82" y="78" class="small">lower is better ↑</text>
+</svg>

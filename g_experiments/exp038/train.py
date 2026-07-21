@@ -210,7 +210,30 @@ def main() -> None:
     )
 
     device = torch.device("cuda")
-    model = build_model(config).to(device)
+    model = build_model(config)
+    initialized_from: dict[str, Any] | None = None
+    init_checkpoint_template = config["train"].get("init_checkpoint")
+    if init_checkpoint_template:
+        init_checkpoint_path = resolve_path(str(init_checkpoint_template).format(fold=fold))
+        if not init_checkpoint_path.is_file():
+            raise FileNotFoundError(f"initial checkpoint not found: {init_checkpoint_path}")
+        source_checkpoint = torch.load(init_checkpoint_path, map_location="cpu")
+        source_fold = int(source_checkpoint.get("fold", fold))
+        if source_fold != fold:
+            raise ValueError(
+                f"initial checkpoint fold={source_fold} does not match requested fold={fold}: "
+                f"{init_checkpoint_path}"
+            )
+        state_dict = source_checkpoint.get("model_state_dict", source_checkpoint)
+        model.load_state_dict(state_dict, strict=True)
+        initialized_from = {
+            "path": str(init_checkpoint_path),
+            "fold": source_fold,
+            "best_metric": source_checkpoint.get("best_metric"),
+            "selection_metric": source_checkpoint.get("selection_metric"),
+        }
+        del source_checkpoint
+    model = model.to(device)
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
 
@@ -242,6 +265,8 @@ def main() -> None:
     best_metric = float("inf")
     best_rmse = float("inf")
     best_tile_rmse = float("inf")
+    best_epoch: int | None = None
+    initial_metrics: dict[str, float] | None = None
     history: list[dict[str, Any]] = []
 
     checkpoint_path = model_dir / f"best_model_fold{fold}.pt"
@@ -267,12 +292,49 @@ def main() -> None:
     with training_log_path.open("w", newline="", encoding="utf-8") as f:
         csv.DictWriter(f, fieldnames=training_log_fields).writeheader()
 
+    experiment_name = str(config.get("experiment", {}).get("name", "exp038"))
     print(
-        f"exp038 GPU train fold={fold}/{n_splits} architecture={config['model'].get('architecture')} "
+        f"{experiment_name} GPU train fold={fold}/{n_splits} "
+        f"architecture={config['model'].get('architecture')} "
         f"train rows={len(train_ds)} valid rows={len(valid_ds)} valid_locations={valid_locations} "
         f"gpus={torch.cuda.device_count()}",
         flush=True,
     )
+    if initialized_from is not None:
+        initial_metrics = evaluate(model, valid_loader, device, clip_min=clip_min)
+        best_metric = float(initial_metrics.get(selection_metric, initial_metrics["rmse"]))
+        best_rmse = float(initial_metrics["rmse"])
+        best_tile_rmse = float(initial_metrics["tile_rmse"])
+        best_epoch = 0
+        early_best = best_metric
+        checkpoint = {
+            "model_state_dict": unwrap_model(model).state_dict(),
+            "config": config,
+            "fold": fold,
+            "valid_locations": valid_locations,
+            "history": history,
+            "initial_metrics": initial_metrics,
+            "initialized_from": initialized_from,
+            "best_epoch": best_epoch,
+            "best_rmse": best_rmse,
+            "best_tile_rmse": best_tile_rmse,
+            "best_metric": best_metric,
+            "selection_metric": selection_metric,
+        }
+        torch.save(checkpoint, checkpoint_path)
+        print(
+            json.dumps(
+                {
+                    "epoch": 0,
+                    "phase": "initialized_checkpoint_baseline",
+                    **initial_metrics,
+                    "selection_metric": selection_metric,
+                    "initialized_from": initialized_from,
+                },
+                indent=2,
+            ),
+            flush=True,
+        )
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -329,12 +391,16 @@ def main() -> None:
             best_metric = current_metric
             best_rmse = float(valid_metrics["rmse"])
             best_tile_rmse = float(valid_metrics["tile_rmse"])
+            best_epoch = epoch
             checkpoint = {
                 "model_state_dict": unwrap_model(model).state_dict(),
                 "config": config,
                 "fold": fold,
                 "valid_locations": valid_locations,
                 "history": history,
+                "initial_metrics": initial_metrics,
+                "initialized_from": initialized_from,
+                "best_epoch": best_epoch,
                 "best_rmse": best_rmse,
                 "best_tile_rmse": best_tile_rmse,
                 "best_metric": best_metric,
@@ -390,7 +456,10 @@ def main() -> None:
                 "best_rmse": best_rmse,
                 "best_tile_rmse": best_tile_rmse,
                 "best_metric": best_metric,
+                "best_epoch": best_epoch,
                 "selection_metric": selection_metric,
+                "initial_metrics": initial_metrics,
+                "initialized_from": initialized_from,
                 "stopped_early": stopped_early,
                 "epochs_completed": len(history),
                 "train_rows_used": len(train_ds),

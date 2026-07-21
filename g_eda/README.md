@@ -14,6 +14,7 @@ GPU/HPC環境で回す重めのEDA・基礎研究系解析を置きます。`eda
 | exp004 | temporal prediction smoothing and advected-smoothing tests | Run |
 | exp005 | IMERG innovation/parallax exploratory diagnostics | Run; external-constant arms are amber |
 | exp006 | exact additive/multiplicative factorization, cross-swap, metric stress, availability | Ready |
+| exp007 | strict/green CV-to-Public transfer audit with paired groups, cluster bootstrap, metadata reweighting | Ready |
 
 ## Run
 

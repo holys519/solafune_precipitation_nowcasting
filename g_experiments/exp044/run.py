@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""exp041: 5-source OOF-weighted blend (exp016/017/018/exp035_no_dilation + exp038_features)
+"""exp044: 5-source OOF-weighted blend (exp016/017/018/exp035_no_dilation + exp038_features)
 + joint post-processing (5-tap +-60min smoothing, blur, per-satellite thresholds) + overlap
 patch.
 
@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXP014 = ROOT / "g_experiments/exp014"
 EXP017 = ROOT / "g_experiments/exp017"
 SUBMISSIONS = ROOT / "outputs/submissions"
-ANALYSIS_DIR = ROOT / "outputs/analysis/exp041"
+ANALYSIS_DIR = ROOT / "outputs/analysis/exp044"
 EVALUATION_CSV = ROOT / "data/evaluation_dataset/evaluation_target.csv"
 TRAIN_CSV = ROOT / "data/train_dataset/train_dataset.csv"
 TRAIN_DIR = ROOT / "data/train_dataset"
@@ -44,6 +44,7 @@ TRAIN_DIR = ROOT / "data/train_dataset"
 FOUR_WAY_SIMPLEX = ROOT / "outputs/g_eda/exp003/4way_simplex_result.json"
 FIVE_SOURCE = ROOT / "outputs/g_eda/exp003/5source_recommendation.json"
 POSTPROCESS = ROOT / "outputs/g_eda/exp004/recommended_postprocess.json"
+SCALE_CORRECTION = ROOT / "outputs/g_eda/exp004/scale_correction_result.json"
 
 FOUR_WAY = ("exp016", "exp017", "exp018", "exp035_no_dilation")
 MODELS = (*FOUR_WAY, "exp038_features")
@@ -121,7 +122,7 @@ def neighbor_indices(rows: list[dict[str, str]]) -> dict[int, list[int]]:
 
 def build(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, str]],
           files: dict[str, dict[str, Path]], postprocess: dict) -> Path:
-    raw_dir = SUBMISSIONS / f"exp041/{name}_raw"
+    raw_dir = SUBMISSIONS / f"exp044/{name}_raw"
     destination = raw_dir / "test_files"
     destination.mkdir(parents=True, exist_ok=True)
 
@@ -161,13 +162,16 @@ def build(name: str, weights: dict[str, dict[str, float]], rows: list[dict[str, 
                 total += w
         smoothed.append(weighted / total)
 
-    blur_sigma = float(postprocess["blur_sigma"])
-    thresholds = postprocess["per_satellite_thresholds"]
+    # Per-satellite (scale, blur_sigma, value_threshold), fit by g_eda/exp003's
+    # run_scale_correction.py jointly re-optimizing on top of the shared smoothing
+    # (OOF -0.00069 vs the previously-shipped shared blur=0.5 / per-satellite thresholds).
+    scale_params = postprocess["scale_correction_per_satellite"]
     for i, row in enumerate(rows):
-        array = smoothed[i]
+        sat = row["satellite_target"]
+        scale, blur_sigma, threshold = scale_params[sat]
+        array = float(scale) * smoothed[i]
         if blur_sigma > 0.0:
             array = gaussian_blur_2d(array, blur_sigma)
-        threshold = float(thresholds[row["satellite_target"]])
         if threshold > 0.0:
             array = np.where(array < threshold, 0.0, array)
         write_float32_like_template(templates[i], destination / row["gpm_imerg_filename"], array)
@@ -197,10 +201,10 @@ def validate_submission_zip(zip_path: Path, filenames: list[str]) -> None:
 
 
 def apply_overlap_patch(name: str, raw_dir: Path, filenames: list[str]) -> Path:
-    patched_dir = SUBMISSIONS / f"exp041/{name}_patched"
-    patched_zip = SUBMISSIONS / f"exp041_{name}_patched.zip"
+    patched_dir = SUBMISSIONS / f"exp044/{name}_patched"
+    patched_zip = SUBMISSIONS / f"exp044_{name}_patched.zip"
     patch_config = {
-        "experiment": {"name": "exp041",
+        "experiment": {"name": "exp044",
                        "description": f"4-source OOF blend {name} + exp014 overlap patch",
                        "seed": 42},
         "data": {"train_csv": str(TRAIN_CSV), "evaluation_csv": str(EVALUATION_CSV),
@@ -238,15 +242,19 @@ def main() -> None:
 
     weights = final_weights()
     postprocess = json.loads(POSTPROCESS.read_text())
+    scale_result = json.loads(SCALE_CORRECTION.read_text())
+    postprocess["scale_correction_per_satellite"] = {
+        sat: info["params"] for sat, info in scale_result["scale_corrected_per_satellite"].items()
+    }
     print(json.dumps({"weights": weights, "postprocess": postprocess}, indent=2), flush=True)
 
-    name = "5src_joint"
+    name = "5src_scalecorr"
     raw_dir = build(name, weights, rows, files, postprocess)
-    raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"exp041_{name}_raw.zip", filenames)
+    raw_zip = create_submission_zip(raw_dir, SUBMISSIONS / f"exp044_{name}_raw.zip", filenames)
     patched_zip = apply_overlap_patch(name, raw_dir, filenames)
 
     summary = {
-        "experiment": "exp041", "weights": weights, "postprocess": postprocess,
+        "experiment": "exp044", "weights": weights, "postprocess": postprocess,
         "raw_zip": str(raw_zip), "raw_zip_sha256": sha256(raw_zip),
         "patched_zip": str(patched_zip), "patched_zip_sha256": sha256(patched_zip),
     }

@@ -4,7 +4,8 @@
 #SBATCH --ntasks=2
 #SBATCH --ntasks-per-node=2
 #SBATCH --gpus-per-node=2
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=7
+#SBATCH --mem=32G
 #SBATCH --time=1-00:00:00
 #SBATCH --output=slurm-exp038-%j.out
 #SBATCH --error=slurm-exp038-%j.err

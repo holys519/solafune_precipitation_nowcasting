@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "source_experiment": "exp038_sigmafixed",
+  "generated_by": "g_eda/exp010/run_causal_smoothing_sweep.py",
+  "compliance": "causal_only (2026-07-20 ruling): next_weight is always 0 in this recommendation",
+  "temporal_smoothing": {
+    "enabled": true,
+    "causal_only": true,
+    "center_weight": 0.85,
+    "prev_weight": 0.0,
+    "prev2_weight": 0.15,
+    "next_weight": 0.0,
+    "max_gap_minutes": 30
+  },
+  "blur_sigma": 1.0,
+  "per_satellite_value_threshold": {
+    "goes": 0.0,
+    "himawari": 0.2,
+    "meteosat": 0.08
+  },
+  "oof_scores": {
+    "no_smoothing": 0.6085249185562134,
+    "exp046_shipped_baseline": 0.6080018877983093,
+    "tuned_2tap": 0.6079942584037781,
+    "tuned_3tap": 0.6073646545410156,
+    "final_with_joint_postprocess": 0.6061346530914307
+  },
+  "used_3tap": true
+}

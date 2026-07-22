@@ -1,6 +1,6 @@
 # Public Scores
 
-Last updated: 2026-07-20
+Last updated: 2026-07-22
 
 **【2026-07-20 公式裁定・完全版】** 運営の公式アナウンス投稿で全項目が確定した。詳細は
 `doc/submission_registry.md`。要点:
@@ -14,10 +14,13 @@ Last updated: 2026-07-20
 - deadlineは運営アナウンス日から1週間延長 (実質2026-08-03頃、要最終確認)
 
 **このtableの多くの上位スコアはsuccessor row由来のred分類となり最終提出には使えない** —
-rank 1つずつに `[ELIGIBLE]` / `[RED]` を付記した。**2026-07-20の裁定後、初のgreen専用結果が出た:
-exp046_causal_smoothed (0.68891) がexp038 (0.68916) をわずかに更新し、新しいeligible green
-champion**。exp040_metric単体 (0.69552) はexp038単体より劣るが、Track G3ブレンド用の
-アーキテクチャ多様性の2本目としての価値は別途評価する。
+rank 1つずつに `[ELIGIBLE]` / `[RED]` を付記した。**2026-07-22現在のgreen champion:
+exp038_sigmafixed (0.68664)、更新されず**。exp046_causal_smoothed (0.68891) → exp038_sigmafixed
+(0.68664、-0.00227) の順で更新後、**exp055 (exp038_sigmafixed×exp040_metricのOOF最適ブレンド、
+Track G3第1弾) を実測したがOOFの−0.00870改善はLBに一切transferせず、むしろ僅かに悪化した**
+(0.68721〜0.68726、詳細は下記Submission LogとObservations)。exp040_metric単体 (0.69552) は
+exp038単体より劣るが、Track G3ブレンド用のアーキテクチャ多様性の2本目としての価値は
+ブレンド重み再設計後に再評価する。
 
 This file tracks public/valid leaderboard scores for the Solafune precipitation nowcasting
 competition. Metric is RMSE, so lower is better.
@@ -49,10 +52,13 @@ Sources:
 | 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
 | 12 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | **[RED]** successor-row sources + patch |
 | 13 | exp035 | `(recorded in E-3 audit)` | 0.6860146267326392 | — | valid | **[RED — 2026-07-20確定]** context_rows: 2 |
-| 14 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | 2026/07/20 01:31:56 | valid | **[ELIGIBLE — new green champion]** exp038 + causal-only temporal smoothing (center=0.85/prev=0.15, next=0, untuned). Beats exp038 solo by -0.00025 -- confirms causal smoothing (permitted 2026-07-20) has real, if small, value even with un-tuned weights |
-| 15 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | 2026/07/18 06:01:30 | valid | **[ELIGIBLE]** strict current-row-only green model, context_rows: 1; superseded by exp046 |
-| 16 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | **[RED — 2026-07-20確定]** exp016/017 blend, both context_rows: 2 |
-| 17 | exp040_metric | `exp040_metric_submission.zip` | 0.6955180267195701 | 2026/07/20 01:32:36 | valid | **[ELIGIBLE]** standalone green model, architecturally distinct from exp038 (metric_weight=0.6 tile-RMSE-shaped loss). Weaker solo than exp038/exp046, but intended as the 2nd model for Track G3 green-blend diversity, not a solo champion |
+| 14 | exp038_sigmafixed | `exp038_sigmafixed_submission.zip` | 0.6866381028699935 | 2026/07/21 08:01:29 | valid | **[ELIGIBLE — current green champion, not beaten by exp055]** exp038 strict + sigma_mode=fixed (no predicted-sigma head). Beats exp046 by -0.00227 and exp038 solo by -0.00253; both fold0/4 improved during gating |
+| 15 | exp055 | `exp055_global_blend_causal.zip` | 0.6872098507591518 | 2026/07/22 01:02:31 | valid | **[ELIGIBLE, but worse than solo champion]** OOF-optimal 48/52 blend of exp038_sigmafixed × exp040_metric + exp010's causal-only smoothing/blur/threshold (tuned for exp038_sigmafixed solo, not re-tuned for the blend). OOF predicted 0.59984 (−0.00868 vs exp038_sigmafixed solo's 0.60852); realized **+0.00057 worse** than solo. Major OOF/LB inversion — see Observations |
+| 16 | exp055 | `exp055_global_blend.zip` | 0.6872601993829903 | 2026/07/22 01:02:58 | valid | **[ELIGIBLE, but worse than solo champion]** same 48/52 blend, no causal smoothing. OOF predicted 0.59982 (−0.00870 vs solo); realized **+0.00062 worse** than solo. Confirms the inversion is in the blend weights themselves, not the smoothing (which was a ~0 net effect in OOF too) |
+| 17 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | 2026/07/20 01:31:56 | valid | **[ELIGIBLE]** exp038 + causal-only temporal smoothing (center=0.85/prev=0.15, next=0, untuned). Beat exp038 solo by -0.00025; superseded by exp038_sigmafixed |
+| 18 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | 2026/07/18 06:01:30 | valid | **[ELIGIBLE]** strict current-row-only green model, context_rows: 1; superseded by exp038_sigmafixed |
+| 19 | exp024 | `exp024_equal_016_017.zip` | 0.6919274860606568 | 2026/07/12 05:13:36 | valid | **[RED — 2026-07-20確定]** exp016/017 blend, both context_rows: 2 |
+| 20 | exp040_metric | `exp040_metric_submission.zip` | 0.6955180267195701 | 2026/07/20 01:32:36 | valid | **[ELIGIBLE]** standalone green model, architecturally distinct from exp038 (metric_weight=0.6 tile-RMSE-shaped loss). Weaker solo than exp038/exp046/exp038_sigmafixed, but intended as the 2nd model for Track G3 green-blend diversity, not a solo champion |
 
 The complete chronological history is in `Submission Log` below.
 
@@ -98,6 +104,9 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/18 06:01:30 | exp038 | `exp038_submission.zip` | 0.6891638997287517 | holyholyholy | valid | strict current-row-only green model。exp011 strict比 −0.03407、strictチャンピオン更新 |
 | 2026/07/20 01:31:56 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | holyholyholy | valid | exp038 + causal-only時間平滑化 (2026-07-20裁定で許可、center=0.85/prev=0.15/next=0、未チューニング)。exp038単体比 -0.00025で**新green champion** |
 | 2026/07/20 01:32:36 | exp040_metric | `exp040_metric_submission.zip` | 0.6955180267195701 | holyholyholy | valid | 単体green model (metric_weight=0.6のtile-RMSE整形損失)。exp038/exp046より単体では劣るが、Track G3のブレンド用アーキテクチャ多様性として評価予定 |
+| 2026/07/21 08:01:29 | exp038_sigmafixed | `exp038_sigmafixed_submission.zip` | 0.6866381028699935 | holyholyholy | valid | exp038 strict + sigma_mode=fixed (predicted-sigma headなし)。exp046比 -0.00227、exp038単体比 -0.00253で**新green champion**。fold0/4ゲート両方改善済みで、5-fold実測でも一貫して効果あり |
+| 2026/07/22 01:02:31 | exp055 | `exp055_global_blend_causal.zip` | 0.6872098507591518 | holyholyholy | valid | g_eda/exp011のOOF最適48/52ブレンド(exp038_sigmafixed×exp040_metric) + g_eda/exp010のcausal平滑化/blur/衛星別threshold。OOF予測0.59984(-0.00868)に対し実測はexp038_sigmafixed単体比+0.00057の**悪化** — 深刻なOOF/LB逆転 |
+| 2026/07/22 01:02:58 | exp055 | `exp055_global_blend.zip` | 0.6872601993829903 | holyholyholy | valid | 同ブレンド、平滑化なし版。OOF予測0.59982(-0.00870)に対し実測は単体比+0.00062の**悪化**。平滑化ありなし(causal版との差0.00005)はノイズ帯 — 逆転の原因はブレンド重みそのもの |
 
 ## Leaderboard Context (snapshot 2026-07-16, from the user)
 
@@ -165,6 +174,52 @@ not placement.
   worse OOF (0.6239). Blend membership should track OOF quality.
 - Next blend candidates: exp033/exp034 ladders mixing exp018 into `equal_016_017` (zips built);
   E-3 pairs now include exp016/017/018 solo scores for a stronger CV→LB regression.
+
+### exp055 green blend: OOF/LB inversion (2026-07-22)
+
+`g_eda/exp011` computed an OOF-optimal 48/52 blend of `exp038_sigmafixed` (OOF 0.60852) ×
+`exp040_metric` (OOF 0.60772), giving blend OOF **0.59982** — a −0.00870 gain over
+`exp038_sigmafixed` solo, far outside this project's established noise band (~0.004–0.005).
+Both the raw blend and the causal-smoothed variant (`g_eda/exp010`'s coefficients, tuned for
+`exp038_sigmafixed` solo, not re-fit for the blend) were submitted:
+
+| Submission | OOF | Public RMSE | vs exp038_sigmafixed solo (0.68664) |
+| --- | ---: | ---: | ---: |
+| exp055_global_blend_causal | 0.59984 | 0.68721 | **+0.00057 (worse)** |
+| exp055_global_blend (no smoothing) | 0.59982 | 0.68726 | **+0.00062 (worse)** |
+
+**Neither beats the solo champion — the −0.0087 OOF gain did not transfer at all; it inverted.**
+Using this project's own historical OOF→LB regression (`LB ≈ 1.268×OOF − 0.080`, fit on 13 red-era
+pairs), blend OOF 0.59982 would predict LB ≈ 0.6808 — the actual 0.6873 is ~0.006 worse than even
+that regression's already-conservative estimate. This is a materially larger inversion than the
+single-model amber case seen earlier (`exp038_features`, OOF −0.0070 vs LB +0.0029).
+
+**Working hypotheses** (neither yet confirmed — flagged for follow-up, not closed):
+
+1. **Blend-weight overfitting to in-sample OOF.** `g_eda/exp011`'s first implementation fits the
+   48/52 weight directly against the same OOF tiles used to report the −0.0087 gain, with no outer
+   cross-fit/nested holdout (the two-source case only has "trivial/full ladder" search tiers — see
+   `optimize_blend.py`). `doc/research_survey_v3_2026-07-16.md` Phase 1 already flagged that blend
+   weight learning should use an outer cross-fit; this was simplified away for the first exp055
+   pass. A weight fit this way can look arbitrarily good on the fold-holdout OOF while encoding
+   structure specific to the *train* locations' fold split, which does not carry over to the
+   (non-overlapping) eval locations — the same structural gap E-4/fold-anatomy already documents
+   as this competition's dominant source of OOF↛LB slippage.
+2. **exp040_metric's error structure may not generalize the same way exp038_sigmafixed's does.**
+   Its distinct loss (tile-RMSE-shaped, `metric_weight=0.6`) could correlate with wetness/regime in
+   a way that looks complementary on train folds (each model's mistakes partly cancel the other's on
+   the *same* fold distribution) without being complementary on eval's different regime mix —
+   consistent with exp040_metric's own solo LB (0.69552) sitting further behind exp038's solo LB
+   (0.68916) than their OOF gap alone would suggest.
+
+**Decision**: `exp038_sigmafixed` (0.68664) remains the green champion and the submission of record.
+`exp055`'s blend is not adopted. **Before re-running the harvest with more sources** (exp047/050/
+051/052/053/054, as their fold gates clear), `g_eda/exp011`'s weight search must be redone with an
+outer cross-fit (fit weights on a subset of folds/locations, score on the held-out remainder,
+repeated) rather than a single in-sample fit on the full OOF — this is the same discipline
+`g_eda/exp003` used successfully for the (now-red) exp016/017/018 blends and should not have been
+skipped here. `g_eda/exp010`'s causal-smoothing coefficients should also be re-tuned against
+whatever blend eventually replaces this one, not carried over from the exp038_sigmafixed-solo fit.
 
 ## Template For Future Submissions
 

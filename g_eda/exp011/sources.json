@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "comment": "Manifest of green-registry blend candidates for the Track G3 green blend. Add a new source by appending ONE object to this list -- no code changes needed. See README.md 'Adding a new source' for the exact steps (registry_guard also needs a matching green_allowlist.json entry before optimize_blend.py will accept it).",
+  "sources": [
+    {
+      "name": "exp038_sigmafixed",
+      "module_dir": "exp038",
+      "checkpoint_dir": "exp038_sigmafixed",
+      "eval_pred_dir": "outputs/submissions/exp038_sigmafixed/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp038_sigmafixed_oof_pred.npz",
+      "public_rmse_solo": 0.6866381028699935,
+      "notes": "current green champion. context_rows: 1, sigma_mode=fixed (no predicted-sigma head)."
+    },
+    {
+      "name": "exp040_metric",
+      "module_dir": "exp040",
+      "checkpoint_dir": "exp040_metric",
+      "eval_pred_dir": "outputs/submissions/exp040_metric/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp040_metric_oof_pred.npz",
+      "public_rmse_solo": 0.6955180267195701,
+      "notes": "architecturally distinct 2nd model (metric_weight=0.6 tile-RMSE-shaped loss). Weaker solo but earmarked for blend diversity (Track G3)."
+    }
+  ]
+}

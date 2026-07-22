@@ -83,6 +83,7 @@
 | exp039_4src_joint_raw | 0.6789588628265085 | **red (2026-07-20確定)** | patchなしだがsuccessor由来sources |
 | exp042_5src_joint_raw / patched | 0.6778 / 0.6608 | **red (2026-07-20確定)** | successor由来sources (exp016/017/018/035) + patch(patched版) |
 | exp044_5src_scalecorr_raw / patched | 0.6577 / **0.6568 (旧・総合ベスト)** | **red (2026-07-20確定)** | 同上。**最終提出候補から除外** |
+| exp055_global_blend / global_blend_causal | 0.6872601993829903 / 0.6872098507591518 | green | `g_eda/exp011`のOOF最適48/52ブレンド(exp038_sigmafixed×exp040_metric)、causal版は`g_eda/exp010`の平滑化を付加。**両方とも構成greenだが exp038_sigmafixed単体(0.68664)を更新できず(+0.0006前後で悪化)** — OOF−0.0087の改善が全くtransferしない深刻な逆転。詳細と原因仮説は`doc/public_scores.md`「exp055 green blend: OOF/LB inversion」参照。**green championはexp038_sigmafixedのまま** |
 
 ## 未提出アーティファクトの区分
 
@@ -103,7 +104,11 @@
 | exp049 (IR窓局所テクスチャ: 3x3標準偏差) | green | context_rows: 1。配布バンドの局所統計量のみ (`doc/domain_knowledge_review_2026-07-20.md` §2.4)。対流雲 vs 霧/層状雲の判別 |
 | exp050 (split-window BTD差分版: spl−win) | green | context_rows: 1。既存engineered特徴の比(SPL/(win+1))に対する、文献標準の差分版アブレーション |
 | exp038_seed123 / exp038_seed456 | green | context_rows: 1、exp038と同一アーキテクチャ・特徴。Track G3グリーンブレンド用のアンサンブル多様性(seed違いのみ) |
-| exp038_sigmafixed | green、**5-fold提出物完成、LB未確認** | context_rows: 1。fold0/4ゲート通過済み (両fold改善)、5-fold完了・提出パイプライン実行済み |
+| exp038_sigmafixed | green、**LB確認済み 0.6866381028699935 (2026/07/21) — 現green champion** | context_rows: 1。sigma_mode=fixed (predicted-sigma headなし)。fold0/4ゲート両方改善、exp046比-0.00227・exp038単体比-0.00253 |
+| exp051 (GPI風rain-area-fraction) | green、fold0/4ゲート通過(fold4-0.00550)、5-fold OOF実行中(2026-07-22時点) | context_rows: 1。win帯閾値+面積比の古典的降水指数(Griffith-Woodley/GPI系)を特徴量化 |
+| exp052 (学習時のみ未来フレーム補助head) | green (推論はcontext_rows:1のまま、未来データは train split のみ・学習時補助lossに限定使用。コンプライアンスassertion実装・検証済み) | G-033の2026-07-20裁定再解釈。fold0/4投入済み、結果待ち |
+| exp053 (自己回帰: 自分の過去予測の再利用) | green (推論はlocation別に時系列順で逐次処理、自分の過去(<T)予測のみ使用) | ゲート判定はteacher-forced OOFではなく自己予測代入OOFで実施予定。fold0/4投入済み、結果待ち |
+| exp054 (amount-bin重み付け強度loss: config_midband / config_heavytail) | green (loss構成のみの変更、入力・後処理は exp038 と同一) | round6知見(mid-band vs heavy-tail論争)の決着用。fold0/4×2arm投入済み、結果待ち |
 
 ## 運用ルール
 

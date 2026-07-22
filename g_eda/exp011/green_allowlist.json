@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "comment": "Hand-maintained cross-check for registry_guard.py. Every source in sources.json must have an entry here with status='green' AND be independently re-verified against doc/submission_registry.md at run time (registry_guard.assert_green does both). Update this file only after checking doc/submission_registry.md yourself -- do not copy an entry forward without re-reading the registry, since statuses can change (see the 2026-07-20 successor-row/overlap-patch ruling that flipped many prior 'valid' submissions to red).",
+  "last_reviewed_against_registry": "2026-07-21",
+  "entries": {
+    "exp038_sigmafixed": {
+      "status": "green",
+      "registry_note": "context_rows: 1. sigma_mode=fixed. Current green champion, LB 0.6866381028699935 (2026-07-21)."
+    },
+    "exp040_metric": {
+      "status": "green",
+      "registry_note": "context_rows: 1. metric_weight=0.6 tile-RMSE-shaped loss. Standalone green model, weaker solo (0.6955180267195701) but earmarked for Track G3 blend diversity."
+    }
+  }
+}

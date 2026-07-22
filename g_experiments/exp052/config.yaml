@@ -1,0 +1,123 @@
+experiment:
+  name: exp052
+  description: "STRICT baseline (exp038 architecture/inputs, unchanged) + a NEW train-time-only auxiliary future-frame supervision head (ticket G-033, reinterpreted per the 2026-07-20 organizer ruling: 'using future frames from the TRAIN split as a training-time auxiliary supervision signal is fine, since there is no leakage at inference time'). Inference-time inputs stay exactly context_rows: 1 (current-row-only); the future-frame path is inference-time-inert by construction and by hard override in inference.py/make_submission.py. See README.md."
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 1
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+  drop_zero_obs_rows: true
+  # NEW (exp052): horizon, in 30-minute row-steps, for the train/valid-only auxiliary
+  # future-frame target (datetime + 30*future_aux_horizon_rows minutes, same location/
+  # satellite). Primary arm: 1 step (30 min ahead). See config_horizon2.yaml for the
+  # not-yet-submitted 2-step (60 min) variant.
+  future_aux_horizon_rows: 1
+
+# Strict-green arm: raw distributed bands only, IDENTICAL to exp038's inference-time inputs
+# (context_rows: 1, no successor rows, no cross-row postprocessing). The only new flag is
+# future_aux_head, which adds a TRAIN/VALID-ONLY auxiliary target -- it never adds input
+# channels and never runs in evaluation mode (see dataset.py's has_target/evaluation_dir
+# guards and inference.py's hard override).
+features:
+  canonical_bands: false
+  engineered: false
+  temporal_abs: false
+  target_time_first: false
+  ir_rain_proxy: false
+  future_aux_head: true
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+# Training regime kept identical to exp018 so the fold0/fold4 A/B against exp018's saved-best
+# numbers isolates the input/bottleneck changes.
+train:
+  batch_size: 128
+  epochs: 100
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: highres_hurdle_lognormal_unet
+  in_channels: 54
+  base_channels: 32
+  internal_size: 128
+  aux_mask_enabled: true
+  clip_min: 0.0
+  sigma_mode: predicted
+  fixed_sigma: 1.0
+  mu_min: -6.0
+  mu_max: 5.0
+  sigma_min: 0.1
+  sigma_max: 2.0
+  amount_cap: 150.0
+  serving_sigma_scale: 1.0
+  # exp030's receptive-field expansion. In this net the bottleneck sits at 8x8 (128/16), where
+  # dilation 4 spans the whole grid — config_no_dilation.yaml is the arm that removes this.
+  bottleneck_dilations: []
+  # NEW (exp052): builds the small auxiliary decoder tapping the bottleneck feature map (see
+  # model.py's HighResHurdleLogNormalUNet). TRAIN-TIME ONLY -- inference.py/make_submission.py
+  # hard-force this to False when serving, regardless of this value.
+  future_aux_head: true
+
+loss:
+  name: hurdle_lognormal
+  rain_threshold: 0.0
+  bce_weight: 1.0
+  intensity_weight: 1.0
+  prediction_weight: 0.0
+  min_wet_target: 0.01
+  aux_mask_weight: 0.2
+  aux_mask_threshold: 0.25
+  aux_dice_weight: 0.5
+  multiscale_weight_2: 0.2
+  multiscale_weight_4: 0.1
+  # NEW (exp052): weight on the masked MSE between output["future_aux"] and the train/valid-
+  # only future-frame target. Modest by design -- this is a secondary auxiliary signal, not a
+  # primary objective; 0.0 would make the whole mechanism a strict no-op (see losses.py).
+  future_aux_weight: 0.1
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp052/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp052
+  output_dir: ../../outputs/submissions/exp052
+  submission_zip: ../../outputs/submissions/exp052_submission.zip
+  analysis_dir: ../../outputs/analysis/exp052
+  norm_stats: norm_stats.json

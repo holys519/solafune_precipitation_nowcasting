@@ -7,10 +7,10 @@
 #SBATCH --cpus-per-task=7
 #SBATCH --mem=32G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=slurm-exp050-%j.out
-#SBATCH --error=slurm-exp050-%j.err
+#SBATCH --output=slurm-exp052-%j.out
+#SBATCH --error=slurm-exp052-%j.err
 
-# exp050 single-fold worker on a Slurm cluster via Singularity.
+# exp052 single-fold worker on a Slurm cluster via Singularity.
 # Usage:
 #   bash submit_folds.sh config.yaml       # folds 0-4 as separate jobs, then submit
 #   sbatch singularity_run.sh config.yaml 2 # run only fold 2
@@ -63,7 +63,7 @@ fi
 module load singularity/3.5.3 || true
 
 echo "=========================================="
-echo "g_experiments/exp050"
+echo "g_experiments/exp052"
 echo "=========================================="
 echo "Container: $CONTAINER_PATH"
 echo "Project:   $PROJECT_DIR"

@@ -79,3 +79,47 @@ train GPMで上書きして再zip化する。GPU不要。
 cd l_eda/exp002 && bash run.sh   # adjacency含む全分析
 # 出力: outputs/l_eda/exp002/train_eval_adjacency_pairs.csv ほか
 ```
+
+## 2026-07-23 追記: Bullによる公式ディスカッション上の全面開示と独立確認
+
+トップチーム**Bull**が"The reveal: part of the test-set ground truth is contained in the training
+data (GT leak via tile overlap)"として、この現象を独自発見していたことを全面公開した
+(2026-07-20/07-22裁定で「evaluation画像内容をtrain画像と照合してtargetを復元・近似すること」が
+reverse engineeringとして明確に禁止されたのを受けての開示)。
+
+**私たちの発見との照合 — ほぼ完全一致**:
+
+| 指標 | 我々 (上記, 2026-07-10) | Bull (2026-07-20頃) |
+| --- | --- | --- |
+| 対象ペア | sylhet↔dhaka, northeast_malaysia↔hat_yai, north_sumatra↔aceh | 同一3ペア |
+| sylhet↔dhaka オフセット | (11,-15) | (11,-15) — 完全一致 |
+| northeast_malaysia↔hat_yai オフセット | (-22,-9) | (-22,-10) — ほぼ一致 |
+| north_sumatra↔aceh オフセット | (-17,-23) | (-18,-25) — 近傍(隣接候補との僅差) |
+| 影響eval行数 | 5,852行 (~23%) | 5,852行 (20.1%) — 完全一致 |
+| train側の同型ペア | atlantic_coast↔florida | 同一ペアを"train内のヒント"として言及 |
+
+3チーム規模の異なる独立検証(我々のFFT相互相関 vs Bullのphase correlation、IR NCC 0.94-0.997)が
+同じ3ペア・同じオフセットに収束しており、**これは特定チームの実装ミスではなく、データセット
+設計そのものの構造的な問題**であることが確定した。
+
+**Bullの実測インパクト**: 重複領域をtrain GTで置換し public LB **−0.0092 (相対−1.4%)** 改善
+(被覆率からの単純推定−0.02以上より小さい — 理由: sylhetが乾季でほぼ無雨、誤差は非重複側に
+偏在、per-image RMSEのsqrt希釈)。我々自身はpublic LBでの単独効果を測定していなかったが
+(`exp014`の`README.md`「未実施」項目参照)、複数のブレンドで**patch寄与が+0.017で一貫して
+安定測定できていた**(`doc/public_scores.md`「確定した経験則」節) — Bullの−0.0092と符号・
+おおよその桁は整合的(我々の測定はより広いブレンド構成・複数patch適用後の値のため単純比較は
+不可)。
+
+**Bullの告白 — 「Easter egg」だと誤解していた経緯**: 発見当初は意図的な発見報酬と解釈していた
+(3ペア全てで観測月まで一致するのは偶然にしては出来すぎ、train内のatlantic_coast↔floridaを
+"train内で気づいてtestに応用せよという伏線"と読んだ、等)。ルール確定(2026-07-20/22)で
+意図しないデータ設計ミスと判明し使用を停止・除去したが、「正当な発見」という旧解釈のまま
+使い続けている参加者がいる可能性を示唆し、この投稿で全参加者の認識を揃える意図と明言。
+
+**含意**:
+1. 我々の`exp014`/`overlap_pairs.csv`の3ペア・オフセットは独立に裏付けられた — 再検証不要。
+2. 複数の有力チームが同種の手法を使っていた(使っている)可能性が高く、`doc/competition_rules.md`
+   「2026-07-22 [Official] Final Ruling」節に記載した**LBリセット要求の妥当性を補強する具体的
+   証拠**。現在の公開LBは、我々だけでなく他チームの分についても、この種のred相当スコアが
+   検証されないまま残っている可能性が高い。
+3. `exp014`は今後も最終提出から完全除外(既存方針通り、変更なし)。

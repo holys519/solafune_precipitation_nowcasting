@@ -9,7 +9,34 @@
 - `discussion/approved_geocoding_sources_ja.md`（公式回答のローカル和訳。ただしpermalink未記録）
 
 公式締切は2026-07-27 23:59 GMT。提出上限は1日あたりチーム人数×5回で、GMT 00:00
-（JST 09:00）にresetされる。
+（JST 09:00）にresetされる。締切は2026-07-20裁定発表日から1週間延長、実質2026-08-03頃
+（下記2026-07-22最終裁定でも据え置き確認）。
+
+## 2026-07-22 [Official] Final Ruling — 確定・今後変更なし
+
+`discussion/`に運営の投稿追跡あり。2026-07-20の裁定は一度「recommendation（good faith前提、
+罰則なし）」へ格下げされたが、motokimura/Bull/nirrの強い反対を受け、**2026-07-22に
+"[Official] Final Ruling: Temporal Boundaries for Evaluation Inputs"として完全に復活・確定**
+した。運営は「今後この件について変更しない」と明言。
+
+**内容は既存のgreen/amber/red分類と完全一致**（下記`doc/submission_registry.md`参照）— 分類の
+変更は不要。ただし2点、重要な更新がある:
+
+1. **検証メカニズムが変更された**: 2026-07-20時点の「Tで切り詰めて再実行し提出結果と一致するか」
+   という再実行方式は撤回され、代わりに**data-loading コードのレビュー**（≥Tのタイムスタンプの
+   observationを一切読んでいないかの確認）に置き換わった。対象は**入賞/メダル圏の提出のみ**で、
+   **コンペ終了後**に実施される。`scripts/verify_causal_replay.py`（切り詰め再実行によるbyte-identical
+   検証）は運営の新方式より厳格な検証なので、そのまま安心して使い続けてよい。
+2. **reverse engineeringの禁止文言がより明確化**: 「evaluation画像の内容をtrain画像と照合して
+   targetを復元・近似すること」が明示的に禁止と確定した。overlap patch (`exp014`) はこれに直接
+   該当し、従来通りred/最終提出禁止で変更なし。
+
+**未解決の重要論点(2026-07-22時点、運営未回答)**: Bull・SajayR等の複数参加者が**公開LBのリセット**
+を要求している。理由: 検証は入賞/メダル圏のみ・コンペ終了後のみで、それ以外の順位のスコアは
+一切検証されない設計が確定したため、現在の公開LBに残っている(successor row・overlap patch等の
+"soft-retrieval"由来と見られる)red相当スコアは、コンペ終了まで一切修正されない。**つまり現在の
+公開LBのギャップ(トップとの差)は引き続き大きく歪んでいる可能性が高く、絶対視すべきではない**。
+運営の回答があり次第このメモを更新する。
 
 ## External Data and Pretrained Weights
 

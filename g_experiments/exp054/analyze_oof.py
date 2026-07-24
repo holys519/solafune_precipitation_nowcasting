@@ -652,7 +652,7 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
                 "edge_low": AMOUNT_BIN_EDGES[i],
                 "edge_high": AMOUNT_BIN_EDGES[i + 1],
                 "tile_count": int(tile_stats["samples"]) if tile_stats else 0,
-                "tile_rmse": float(tile_stats["tile_rmse"]) if tile_stats else None,
+                "tile_rmse": float(tile_stats["tile_rmse_sum"] / max(tile_stats["samples"], 1.0)) if tile_stats else None,
                 "tile_share": float(tile_stats["samples"]) / len(sample_rows) if tile_stats and sample_rows else None,
                 "positive_pixel_count": int(pix_count),
                 "positive_pixel_share_of_wet": float(pix_count / total_wet_pixels) if total_wet_pixels > 0 else None,

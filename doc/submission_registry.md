@@ -83,7 +83,8 @@
 | exp039_4src_joint_raw | 0.6789588628265085 | **red (2026-07-20確定)** | patchなしだがsuccessor由来sources |
 | exp042_5src_joint_raw / patched | 0.6778 / 0.6608 | **red (2026-07-20確定)** | successor由来sources (exp016/017/018/035) + patch(patched版) |
 | exp044_5src_scalecorr_raw / patched | 0.6577 / **0.6568 (旧・総合ベスト)** | **red (2026-07-20確定)** | 同上。**最終提出候補から除外** |
-| exp055_global_blend / global_blend_causal | 0.6872601993829903 / 0.6872098507591518 | green | `g_eda/exp011`のOOF最適48/52ブレンド(exp038_sigmafixed×exp040_metric)、causal版は`g_eda/exp010`の平滑化を付加。**両方とも構成greenだが exp038_sigmafixed単体(0.68664)を更新できず(+0.0006前後で悪化)** — OOF−0.0087の改善が全くtransferしない深刻な逆転。詳細と原因仮説は`doc/public_scores.md`「exp055 green blend: OOF/LB inversion」参照。**green championはexp038_sigmafixedのまま** |
+| exp055_global_blend / global_blend_causal | 0.6872601993829903 / 0.6872098507591518 | green | `g_eda/exp011`のOOF最適48/52ブレンド(exp038_sigmafixed×exp040_metric)、causal版は`g_eda/exp010`の平滑化を付加。**両方とも構成greenだが exp038_sigmafixed単体(0.68664)を更新できず(+0.0006前後で悪化)** — OOF−0.0087の改善が全くtransferしない深刻な逆転。詳細と原因仮説は`doc/public_scores.md`「exp055 green blend: OOF/LB inversion」参照。`g_eda/exp011/nested_blend.py`のouter-cross-fit再検証(2026-07-24)でも、in-sample fitとの差はごく小さく(overfitting gap -0.00024)、この逆転はfold構成overfitではなくtrain-eval分布シフトが原因と判断 |
+| **exp056** | **0.6839627937847801** | **green (現champion)** | Mean-intensity×normalized-shape分解アーキテクチャ。context_rows:1、行内入力のみ、patch/blendなし。exp038_sigmafixed比-0.00268。事前に`l_eda/exp005/submission_gate.py`でGO判定 (OOF Δ-0.00576、80%CIが0を除外、18/20 locationで改善) |
 
 ## 未提出アーティファクトの区分
 
@@ -108,7 +109,11 @@
 | exp051 (GPI風rain-area-fraction) | green、fold0/4ゲート通過(fold4-0.00550)、5-fold OOF実行中(2026-07-22時点) | context_rows: 1。win帯閾値+面積比の古典的降水指数(Griffith-Woodley/GPI系)を特徴量化 |
 | exp052 (学習時のみ未来フレーム補助head) | green (推論はcontext_rows:1のまま、未来データは train split のみ・学習時補助lossに限定使用。コンプライアンスassertion実装・検証済み) | G-033の2026-07-20裁定再解釈。fold0/4投入済み、結果待ち |
 | exp053 (自己回帰: 自分の過去予測の再利用) | green (推論はlocation別に時系列順で逐次処理、自分の過去(<T)予測のみ使用) | ゲート判定はteacher-forced OOFではなく自己予測代入OOFで実施予定。fold0/4投入済み、結果待ち |
-| exp054 (amount-bin重み付け強度loss: config_midband / config_heavytail) | green (loss構成のみの変更、入力・後処理は exp038 と同一) | round6知見(mid-band vs heavy-tail論争)の決着用。fold0/4×2arm投入済み、結果待ち |
+| exp054 (amount-bin重み付け強度loss: config_midband / config_heavytail) | green (loss構成のみの変更、入力・後処理は exp038 と同一) | round6知見(mid-band vs heavy-tail論争)の決着用。fold0/4×2arm投入済み、結果待ち。midband 5-fold OOF 0.60966 (champion比+0.00138、ノイズ帯内) |
+| exp056_seed123 / exp056_seed456 | green | context_rows: 1、exp056 championと同一アーキテクチャ・特徴、seed違いのみ。分散低減のシードアンサンブル用 (OOF→LB逆転リスクが低い、`doc/oof_lb_transfer_by_category_2026-07-25.md`)。5-fold投入済み |
+| exp059 (exp056 + NODATA emissive-band masking) | green (context_rows: 1、配布バンドのみ。発光帯分類はtrain exact-0率から経験的に決定、外部波長表・外部データ不使用。mean/stdはexp056とビット一致=クリーンablation) | peppamintディスカッションのNODATA知見。**特徴量系のため、OOF改善が出てもLB実測なしに採用しない** (上記メタ分析ルール)。fold0/4投入済み、`scripts/audit_submission_config.py`静的監査は赤旗なし |
+| exp060 (厳密 total×softmax-distribution 分解) | green (context_rows: 1、exp056と同一入力・CV、出力定式化のみ変更) | exp058/TotalShapeNowcasterの意図をexp056安定土台で再構築。totalをlog1p空間で学習しexp058の生mm NaN発散を回避。sum(pred)=tile_total厳密。**アーキテクチャ系のためOOF改善は信頼可**。fold0/4投入済み、静的監査赤旗なし |
+| exp062 (exp056 @ internal_size 192) | green (context_rows: 1、exp056と同一・内部解像度のみ128→192) | exp058のもう一つの軸(高解像)を安定土台で単離検証。アーキ系。fold0/4投入済み、静的監査赤旗なし |
 
 ## 運用ルール
 

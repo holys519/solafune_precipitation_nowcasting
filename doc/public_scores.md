@@ -1,6 +1,28 @@
 # Public Scores
 
-Last updated: 2026-07-24
+Last updated: 2026-07-26
+
+**2026-07-26 追記4: seed-ensembleが新green champion。** `exp056_seed_ens_42_456`
+(exp056 seed42 と seed456 のeval予測の等重み平均) = **0.6827721114076882**、exp056単体(0.68396)を
+**-0.00119** 更新。ポイント: (1) この2シード平均は**両メンバー(seed42=0.68396, seed456=0.68569)の
+どちらより良い** — 誤差相殺による本物のアンサンブル効果。(2) 3シード平均(42+123+456)=0.68408 は
+seed123(単体0.69111の外れ値)に引かれseed42とほぼタイ → **弱いメンバーを入れると希釈する**
+(exp055の教訓のseed版)。(3) **seedだけでLBが~0.007ばらつく** (seed42 0.68396 / seed456 0.68569 /
+seed123 0.69111) と判明、かつOOF順位(42<123<456)とLB順位(42<456<123)が不一致 —
+我々の多くの試行(±0.002級)がseedノイズ以下だった。追加seed(789/1337/2024)を学習中で、
+champion級seedのみで大きめのアンサンブルを組む。**注意: 42+456の2本選択は公開LBによる
+seed選択(mild public-LB overfit)なので、追加seed完走後は全champion級seedの平均をprivate向けの
+頑健な最終候補にする**。
+
+**2026-07-24 追記3: exp056が新green champion (0.68396、-0.00268)。** Mean-intensity×
+normalized-shapeの分解アーキテクチャ(`g_experiments/exp056`、`g_eda/exp002`のoracle-ladder
+分析が示した「残差の支配項はplacementでなくAMOUNT」という知見に基づく、strict-green・
+context_rows:1、feature/blend側の微調整ではなく正面からのアーキテクチャ変更)。
+`l_eda/exp005/submission_gate.py`でも事前にGO判定(OOF Δ-0.00576、80%CI
+`[-0.00920,-0.00259]`で0を除外、18/20 locationで改善・集中なし)が出ており、実測でも
+方向が一致した(OOF改善の約47%がLBに転移 — exp050/047のような逆転ではなく、
+exp040_metric単体のような過小transferでもない、健全な範囲)。**Green championを
+exp038_sigmafixed (0.68664) からexp056 (0.68396) に更新。**
 
 **【2026-07-20 公式裁定・完全版】** 運営の公式アナウンス投稿で全項目が確定した。詳細は
 `doc/submission_registry.md`。要点:
@@ -30,6 +52,28 @@ exp038単体より劣るが、Track G3ブレンド用のアーキテクチャ多
 このプロジェクトのノイズ帯(~0.004-0.005)を遥かに超える、今セッション最大のOOF/LB逆転。
 原因分析は下記Observations参照。**green championはexp038_sigmafixed (0.68664) のまま、更新なし**。
 
+**2026-07-24 追記2 (I-002: 検証手法の堅牢化)**: exp050/exp047/exp055の3件連続でOOF改善が
+LBに転移しなかったことを受け、`l_eda/exp005`(location-cluster bootstrap CI +
+gain-concentration監査 + submission gate)と`g_eda/exp011/nested_blend.py`(outer-cross-fit
+ブレンド重み最適化)を新規実装。遡及検証では、exp050_sigmafixed・exp047_sigmafixedのどちらも
+提出前に走らせていれば **NO-GO** と判定されており(train locationがわずか20個・foldが
+不均等なため80% bootstrap CIが0をまたぎ、かつ改善が上位2locationに69-74%集中)、実際に
+起きた「transferしない」「致命的に悪化する」という結果と整合する。
+
+**ただしexp055は捕捉できなかった** — `nested_blend.py`でexp038_sigmafixed×exp040_metricの
+outer-cross-fit再検証を行ったところ、nested score (0.60007) は元のin-sample fit (0.59982) と
+ほぼ同一(overfitting gap -0.00024、fold間の重みも0.45-0.53で安定)で、「in-sample fitが
+fold構造にoverfitしていた」という当初の仮説は支持されなかった。この結果を`submission_gate.py`に
+通すとGO判定(80%CIが0を除外、改善は15/20 locationに分散、集中なし)になるが、**実測は
+solo champion比+0.00057〜+0.00062の悪化**。つまりこの失敗はfold構成ノイズでもgeography
+shortcutでもなく、**train 20地点内でのresamplingでは原理的に検出不可能なtrain-eval分布シフト**
+が原因と判断される。教訓として「ブレンド候補は各構成要素自身の過去のOOF→LB転移効率
+(`l_eda/exp003`の回帰: LB≈1.268×OOF−0.080)を事前チェックする」というルールを追加した
+(exp040_metricは単体のOOF→LB gapがexp038_sigmafixedより大きく、これが予兆だった)。
+詳細は`doc/plan/round7_validation_hardening_2026-07-24.md`、ticketは`doc/task_tickets.md`の
+I-002。**今後、OOF改善が0.01未満の候補は`submission_gate.py`のGO判定なしに提出しない。
+ブレンドはGO判定に加えて各構成要素の過去のOOF→LB転移効率も必ず確認する**運用とする。
+
 This file tracks public/valid leaderboard scores for the Solafune precipitation nowcasting
 competition. Metric is RMSE, so lower is better.
 
@@ -58,9 +102,12 @@ Sources:
 | 9 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | **[RED]** successor-row sources + patch |
 | 10 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | 2026/07/17 10:27:45 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
 | 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
+| 11a | exp056_seed_ens_42_456 | `exp056_seed_ens_42_456_submission.zip` | 0.6827721114076882 | 2026/07/26 12:11:07 | valid | **[ELIGIBLE — current green champion]** equal-weight average of exp056 seed42 + seed456 eval predictions (same green architecture, seed-only diversity). Beats exp056 seed42 solo by -0.00119 and beats BOTH members (0.68396/0.68569) -- genuine variance-reduction ensemble. Seed pairing chosen on public LB (mild overfit); to be re-based on all champion-level seeds once 789/1337/2024 finish |
+| 11a2 | exp056_seed_ensemble | `exp056_seed_ensemble_submission.zip` | 0.6840805442401546 | 2026/07/26 12:10:43 | valid | **[ELIGIBLE]** 3-seed average (42+123+456); +0.00012 vs seed42 solo -- seed123 (0.69111 solo) diluted it back to ~tie. Confirms weak members hurt the average |
+| 11b | exp056 | `exp056_submission.zip` | 0.6839627937847801 | 2026/07/24 17:58:34 | valid | **[ELIGIBLE — best single model; superseded as champion by the 2-seed ensemble]** Mean-intensity x normalized-shape factorized architecture (`g_experiments/exp056`), strict-green context_rows:1, no blend/patch. Beats exp038_sigmafixed by -0.00268 -- an architectural change, not a feature/blend tweak. `l_eda/exp005/submission_gate.py` returned GO ahead of this submission (OOF Δ-0.00576, 80% CI excludes zero, gain diffuse across 18/20 locations) |
 | 12 | exp027 | `exp027_equal_all_patched.zip` | 0.6849224439171961 | 2026/07/13 12:02:26 | valid | **[RED]** successor-row sources + patch |
 | 13 | exp035 | `(recorded in E-3 audit)` | 0.6860146267326392 | — | valid | **[RED — 2026-07-20確定]** context_rows: 2 |
-| 14 | exp038_sigmafixed | `exp038_sigmafixed_submission.zip` | 0.6866381028699935 | 2026/07/21 08:01:29 | valid | **[ELIGIBLE — current green champion, not beaten by exp055]** exp038 strict + sigma_mode=fixed (no predicted-sigma head). Beats exp046 by -0.00227 and exp038 solo by -0.00253; both fold0/4 improved during gating |
+| 14 | exp038_sigmafixed | `exp038_sigmafixed_submission.zip` | 0.6866381028699935 | 2026/07/21 08:01:29 | valid | **[ELIGIBLE — superseded by exp056]** exp038 strict + sigma_mode=fixed (no predicted-sigma head). Beats exp046 by -0.00227 and exp038 solo by -0.00253; both fold0/4 improved during gating |
 | 15 | exp055 | `exp055_global_blend_causal.zip` | 0.6872098507591518 | 2026/07/22 01:02:31 | valid | **[ELIGIBLE, but worse than solo champion]** OOF-optimal 48/52 blend of exp038_sigmafixed × exp040_metric + exp010's causal-only smoothing/blur/threshold (tuned for exp038_sigmafixed solo, not re-tuned for the blend). OOF predicted 0.59984 (−0.00868 vs exp038_sigmafixed solo's 0.60852); realized **+0.00057 worse** than solo. Major OOF/LB inversion — see Observations |
 | 16 | exp055 | `exp055_global_blend.zip` | 0.6872601993829903 | 2026/07/22 01:02:58 | valid | **[ELIGIBLE, but worse than solo champion]** same 48/52 blend, no causal smoothing. OOF predicted 0.59982 (−0.00870 vs solo); realized **+0.00062 worse** than solo. Confirms the inversion is in the blend weights themselves, not the smoothing (which was a ~0 net effect in OOF too) |
 | 17 | exp046 | `exp046_causal_smoothed_submission.zip` | 0.6889118106607066 | 2026/07/20 01:31:56 | valid | **[ELIGIBLE]** exp038 + causal-only temporal smoothing (center=0.85/prev=0.15, next=0, untuned). Beat exp038 solo by -0.00025; superseded by exp038_sigmafixed |
@@ -117,8 +164,13 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/21 08:01:29 | exp038_sigmafixed | `exp038_sigmafixed_submission.zip` | 0.6866381028699935 | holyholyholy | valid | exp038 strict + sigma_mode=fixed (predicted-sigma headなし)。exp046比 -0.00227、exp038単体比 -0.00253で**新green champion**。fold0/4ゲート両方改善済みで、5-fold実測でも一貫して効果あり |
 | 2026/07/24 16:41:52 | exp047_sigmafixed | `exp047_sigmafixed_submission.zip` | 0.7001420620597125 | holyholyholy | valid | solar time特徴+sigma_fix。OOF 0.60747 (champion比-0.00081) だったが実測+0.01350の致命的悪化 — hemisphere×衛星one-hotによる訓練地域気候の暗記が疑われる。championから撤回 |
 | 2026/07/24 16:42:13 | exp050_sigmafixed | `exp050_sigmafixed_submission.zip` | 0.6870176972903309 | holyholyholy | valid | split-window BTD+sigma_fix。OOF 0.60643 (champion比-0.00185、今セッション最良OOF) だったが実測+0.00038 — ノイズ帯内でほぼtransferせず |
+| 2026/07/25 22:52:37 | exp056_seed456 | `exp056_seed456_submission.zip` | 0.6856908397786738 | holyholyholy | valid | exp056 seed456単体。OOF 0.61621 (最悪) だがLBはseed123より良い — OOF/LB順位不一致 |
+| 2026/07/25 22:53:07 | exp056_seed123 | `exp056_seed123_submission.zip` | 0.6911129946327748 | holyholyholy | valid | exp056 seed123単体。OOF 0.60826 (2番目に良い) だがLB最悪 — seedノイズ~0.007の実証 |
+| 2026/07/26 12:10:43 | exp056_seed_ensemble | `exp056_seed_ensemble_submission.zip` | 0.6840805442401546 | holyholyholy | valid | 3シード平均(42+123+456)。seed123に希釈されseed42とほぼタイ |
+| 2026/07/26 12:11:07 | exp056_seed_ens_42_456 | `exp056_seed_ens_42_456_submission.zip` | 0.6827721114076882 | holyholyholy | valid | **2シード平均(42+456)= 新green champion**。両メンバーより良い、-0.00119 vs seed42単体 |
 | 2026/07/22 01:02:31 | exp055 | `exp055_global_blend_causal.zip` | 0.6872098507591518 | holyholyholy | valid | g_eda/exp011のOOF最適48/52ブレンド(exp038_sigmafixed×exp040_metric) + g_eda/exp010のcausal平滑化/blur/衛星別threshold。OOF予測0.59984(-0.00868)に対し実測はexp038_sigmafixed単体比+0.00057の**悪化** — 深刻なOOF/LB逆転 |
 | 2026/07/22 01:02:58 | exp055 | `exp055_global_blend.zip` | 0.6872601993829903 | holyholyholy | valid | 同ブレンド、平滑化なし版。OOF予測0.59982(-0.00870)に対し実測は単体比+0.00062の**悪化**。平滑化ありなし(causal版との差0.00005)はノイズ帯 — 逆転の原因はブレンド重みそのもの |
+| 2026/07/24 17:58:34 | exp056 | `exp056_submission.zip` | 0.6839627937847801 | holyholyholy | valid | Mean-intensity×normalized-shape分解アーキテクチャ (g_eda/exp002のoracle-ladderが示した「残差の支配項はAMOUNT」への正面対応)。exp038_sigmafixed比 -0.00268で**新green champion**。事前にsubmission_gate.pyでGO判定 (OOF Δ-0.00576、80%CI `[-0.00920,-0.00259]`、18/20 locationで改善) — OOFの約47%がLBに転移し、健全な範囲 |
 
 ## Leaderboard Context (snapshot 2026-07-16, from the user)
 
@@ -162,6 +214,28 @@ not placement.
 | exp001 | A100 test | 0.7937729717031525 | submission list 2026/07/07 11:20:13 | Reproduced on cloud, worse than local run |
 
 ## Observations
+
+### exp056: an architectural bet that paid off, and confirms the toolkit isn't just a naysayer (2026-07-24)
+
+`exp056` (mean-intensity × normalized-shape factorized architecture) is the first genuine
+architecture change submitted in several rounds — prior candidates (exp047/exp050/exp055) were all
+feature or blend micro-optimizations chasing sub-noise OOF deltas. It is motivated by
+`g_eda/exp002`'s oracle-ladder finding that per-tile AMOUNT/intensity error, not spatial placement,
+dominates this architecture family's residual, and factorizes the served prediction into a
+separately-supervised scalar mean-intensity head times a normalized spatial shape head instead of
+one joint per-pixel head. Result: **new green champion at 0.68396, -0.00268 vs exp038_sigmafixed**.
+
+This is also the first candidate scored by `l_eda/exp005/submission_gate.py` *before* being folded
+into this doc's narrative as a retrospective diagnosis: it returned **GO** (OOF Δ-0.00576, 80% CI
+`[-0.00920, -0.00259]` excluding zero, gain diffuse across 18/20 locations, no concentration flag),
+and about 47% of the OOF gain transferred to the real LB delta — a healthy, unremarkable transfer
+ratio, unlike exp047/exp050's near-zero or inverted transfer. Together with the exp055 negative
+result below, this is useful evidence about what the toolkit is and isn't good for: it correctly
+passed a real, generalizable architecture improvement instead of flagging everything as suspect, and
+it correctly rejected two illusory feature-engineering gains — but it also shows a false GO on a
+blend whose problem was train-vs-eval distribution shift, not sampling noise. The practical lesson
+matches the original diagnosis this round started from: further investment in genuine architecture
+changes (not feature/blend micro-tuning) is where the remaining ~10 days are best spent.
 
 - **exp038 (0.68916) is the strict/green champion**: exp011 strict比でOOF −0.01967、
   Public −0.03407。exp018/exp035との0.003–0.007級の順位差は不安定なため、

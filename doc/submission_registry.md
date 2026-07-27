@@ -110,10 +110,12 @@
 | exp052 (学習時のみ未来フレーム補助head) | green (推論はcontext_rows:1のまま、未来データは train split のみ・学習時補助lossに限定使用。コンプライアンスassertion実装・検証済み) | G-033の2026-07-20裁定再解釈。fold0/4投入済み、結果待ち |
 | exp053 (自己回帰: 自分の過去予測の再利用) | green (推論はlocation別に時系列順で逐次処理、自分の過去(<T)予測のみ使用) | ゲート判定はteacher-forced OOFではなく自己予測代入OOFで実施予定。fold0/4投入済み、結果待ち |
 | exp054 (amount-bin重み付け強度loss: config_midband / config_heavytail) | green (loss構成のみの変更、入力・後処理は exp038 と同一) | round6知見(mid-band vs heavy-tail論争)の決着用。fold0/4×2arm投入済み、結果待ち。midband 5-fold OOF 0.60966 (champion比+0.00138、ノイズ帯内) |
+| exp063 (長期causal履歴: predecessor 2h, 207ch) | green、**fold0/4ゲート棄却 (両fold悪化 f0+0.0032/f4+0.0091、2026-07-27)、クローズ** | 合法な過去履歴(<T)を207chスタック。因果性は設計上クリーンだが、汎化に効かず訓練過学習を増やしただけ。情報軸を足しても分布シフト律速は動かず(exp064の容量軸と同じ結論)。短縮履歴/時間的アーキでの再挑戦は理論上可能だが優先度低 |
+| exp064 (事前学習バックボーン×5: effb3/effv2s/resnet34/convnext/swin) | green、**effv2sが~タイ最良だがchampion超えず(2026-07-27)。solo不採用、effv2s/effb3はアーキ多様アンサンブル用に5-fold保持** | `doc/pretrained_backbone_findings_2026-07-27.md`。capacityはボトルネックでないと実証。convnext/swinはNaN発散 |
 | exp056_seed123 / exp056_seed456 | green | context_rows: 1、exp056 championと同一アーキテクチャ・特徴、seed違いのみ。分散低減のシードアンサンブル用 (OOF→LB逆転リスクが低い、`doc/oof_lb_transfer_by_category_2026-07-25.md`)。5-fold投入済み |
-| exp059 (exp056 + NODATA emissive-band masking) | green (context_rows: 1、配布バンドのみ。発光帯分類はtrain exact-0率から経験的に決定、外部波長表・外部データ不使用。mean/stdはexp056とビット一致=クリーンablation) | peppamintディスカッションのNODATA知見。**特徴量系のため、OOF改善が出てもLB実測なしに採用しない** (上記メタ分析ルール)。fold0/4投入済み、`scripts/audit_submission_config.py`静的監査は赤旗なし |
-| exp060 (厳密 total×softmax-distribution 分解) | green (context_rows: 1、exp056と同一入力・CV、出力定式化のみ変更) | exp058/TotalShapeNowcasterの意図をexp056安定土台で再構築。totalをlog1p空間で学習しexp058の生mm NaN発散を回避。sum(pred)=tile_total厳密。**アーキテクチャ系のためOOF改善は信頼可**。fold0/4投入済み、静的監査赤旗なし |
-| exp062 (exp056 @ internal_size 192) | green (context_rows: 1、exp056と同一・内部解像度のみ128→192) | exp058のもう一つの軸(高解像)を安定土台で単離検証。アーキ系。fold0/4投入済み、静的監査赤旗なし |
+| exp059 (exp056 + NODATA emissive-band masking) | green だが**fold0/4ゲート不通過 (2026-07-25、両fold悪化 f0+0.0008/f4+0.0065)、クローズ** | peppamintのNODATA知見。発光帯汚染は我々のパイプラインでは主要誤差源でなかった。特徴量系のため元々OOF改善でも保留予定だったが、ゲート自体を通らず。mean/stdはexp056とビット一致=クリーンablation |
+| exp060 (厳密 total×softmax-distribution 分解) | green だが**fold0/4ゲート不通過 (2026-07-25、両fold悪化 f0+0.0050/f4+0.0158)、クローズ** | exp058の意図をlog空間で再構築しNaNは回避したが、championに敗北。**教訓: softmaxが和1を全1681画素に強制→82%乾燥タイルで集中が薄まる。exp056の rain_probゲート×mean×shape (乾燥域を明示処理) の方が優れると実証**。exp058系アーキの方向はクローズ |
+| exp062 (exp056 @ internal_size 192) | green だが**fold0/4ゲート不通過 (2026-07-25、f0+0.0021/f4-0.0018で正味中立〜微悪化)、クローズ** | 高解像化は中立。exp058のもう一つの軸(高解像)も効果なしと確定 |
 
 ## 運用ルール
 

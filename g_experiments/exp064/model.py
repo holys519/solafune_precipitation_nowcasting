@@ -491,6 +491,7 @@ class PretrainedFactorizedUNet(nn.Module):
             encoder_name, pretrained=pretrained, features_only=True, in_chans=in_channels
         )
         enc_chs = [info["num_chs"] for info in self.encoder.feature_info]  # shallow -> deep
+        self._enc_chs = list(enc_chs)  # for NHWC->NCHW normalization (swin & other channels-last)
 
         # U-Net decoder: start at the deepest map, upsample to each shallower skip and fuse.
         c = int(decoder_channels)
@@ -521,6 +522,14 @@ class PretrainedFactorizedUNet(nn.Module):
     def forward_features(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         x = F.interpolate(x, size=(self.internal_size, self.internal_size), mode="bilinear", align_corners=False)
         feats = self.encoder(x)  # list shallow -> deep
+        # Some timm encoders (swin/vit-like) emit channels-last NHWC feature maps; normalize to NCHW
+        # by matching each map against its known channel count from feature_info.
+        norm_feats = []
+        for f, ch in zip(feats, self._enc_chs):
+            if f.ndim == 4 and f.shape[1] != ch and f.shape[-1] == ch:
+                f = f.permute(0, 3, 1, 2).contiguous()
+            norm_feats.append(f)
+        feats = norm_feats
         deep_pooled = feats[-1].float().mean(dim=(2, 3))  # global context for the tile-total MLP
         laterals = [lat(f) for lat, f in zip(self.lateral, feats)]
         d = laterals[-1]

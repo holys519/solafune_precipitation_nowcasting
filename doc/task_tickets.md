@@ -1,6 +1,6 @@
 # Task Tickets
 
-Last updated: 2026-07-10
+Last updated: 2026-07-24 (I-002 added; see Round 7 section at the end)
 
 Tracks concrete follow-up work after `exp001` (public RMSE 0.7531995875751526). See
 `doc/exp001_retrospective.md` for the analysis behind the exp002 tickets, and
@@ -515,3 +515,18 @@ with only the decision threshold tuned. Try a Dice or Focal loss term on the rai
 (in addition to or instead of `bce_weight`/`bce_pos_weight` in `loss.two_head_rain`) on top of
 whichever architecture wins G-016, and compare CSI/precision/recall at the OOF-selected threshold
 against the current plateau.
+
+## Round 7 Open Tickets (2026-07-24, validation hardening)
+
+Three submissions in this session (`exp050_sigmafixed`, `exp047_sigmafixed`, `exp055`) all showed an
+OOF improvement that failed to transfer to the public LB — `exp047_sigmafixed` inverted into the
+single worst regression of the project (OOF −0.00081, LB **+0.01350**). The common structural cause,
+per `doc/public_scores.md` Observations and `l_eda/exp004`'s fold anatomy: only 20 train locations
+back the 5-fold OOF (as few as 2 locations in fold 0), so sub-0.005 OOF deltas are frequently
+indistinguishable from which locations happened to land in which fold, and blend-weight fits done
+in-sample (no outer holdout) can encode that same fold-composition noise as if it were signal. See
+`doc/plan/round7_validation_hardening_2026-07-24.md` for the full writeup.
+
+| ID | Track | Exp | Title | Priority | Status |
+| --- | --- | --- | --- | --- | --- |
+| I-002 | infra | l_eda/exp005, g_eda/exp011 | Robust OOF validation toolkit: location-cluster bootstrap CI, gain-concentration (geography-shortcut) audit, outer-cross-fit blend optimizer, and a combined go/no-go submission gate | P0 | Done, with an important documented limitation — `l_eda/exp005/submission_gate.py` retroactively flags `exp050_sigmafixed` and `exp047_sigmafixed` as NO-GO (2 of 3 misses caught). `g_eda/exp011/nested_blend.py`'s outer-cross-fit re-analysis of the exact `exp055` pair found the in-sample overfitting hypothesis was NOT the operative mechanism (nested score 0.60007 vs in-sample 0.59982, gap only -0.00024, weights stable across folds) — the gate returns GO on the nested blend, yet the real submission was worse than solo champion. Root cause is a train-vs-eval distribution shift that no resampling of the 20 train locations can detect; see `doc/plan/round7_validation_hardening_2026-07-24.md` for the added mitigation (cross-check each blend component's own historical OOF->LB transfer efficiency before trusting blend diagnostics). **Mandatory going forward**: run `submission_gate.py` before any submission with OOF gain < ~0.01, and `nested_blend.py` for blends, but treat a GO on a blend as necessary, not sufficient |

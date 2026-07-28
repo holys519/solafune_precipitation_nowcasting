@@ -1,0 +1,47 @@
+experiment:
+  name: exp058_total_shape_highres
+
+data:
+  train_csv: ../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../data/train_dataset
+  evaluation_dir: ../data/evaluation_dataset
+  norm_stats: ../g_experiments/exp038/norm_stats.json
+  input_size: [164, 164]
+  output_size: [41, 41]
+  max_observations: 3
+  satellite_channels: 16
+  drop_zero_observation_rows: true
+
+split:
+  n_splits: 5
+  fold: 0
+  seed: 42
+  stratify_bins: 5
+
+model:
+  base_channels: 32
+  total_hidden: 128
+  dropout: 0.1
+
+loss:
+  field_huber: 1.0
+  total_huber: 0.35
+  distribution: 0.15
+  occurrence_bce: 0.1
+  multiscale_mse: 0.1
+  huber_delta: 1.0
+  wet_threshold: 0.0
+
+train:
+  epochs: 80
+  batch_size: 32
+  num_workers: 8
+  lr: 0.0003
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  amp: true
+  patience: 15
+
+paths:
+  output_dir: ../outputs/research/exp058_total_shape_highres

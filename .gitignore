@@ -58,6 +58,7 @@ l_experiments/*/output/
 l_experiments/*/wandb/
 g_experiments/*/output/
 g_experiments/*/wandb/
+kaggle_model_upload/
 
 # Scheduler and runtime logs
 slurm-*.err

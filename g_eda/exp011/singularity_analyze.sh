@@ -3,15 +3,19 @@
 #SBATCH --account=project143
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=30
 #SBATCH --output=slurm-g-eda-exp011-analyze-%j.out
 #SBATCH --error=slurm-g-eda-exp011-analyze-%j.err
 
 # g_eda/exp011 phase 2: compute OOF-optimal blend weights from every source's cache.
-# CPU-only by design (no --gpus-per-node, no --nv) -- this stage is pure numpy over the cached
-# fp16 npz arrays, so it deliberately does not compete for the scarce GPU allocation the way
-# exp036's singularity_run.sh does (that one requests a GPU it does not use).
+# The actual work (pure numpy over cached fp16 npz arrays) does not need a GPU, and this script
+# never passes --nv to singularity -- but 2026-07-30 testing found this partition's scheduler
+# (GAIA) hard-requires --gpus-per-node >= 1 on every job regardless of workload ("Invalid generic
+# resource (gres) specification" otherwise; this script had never actually been run before that
+# was discovered, per the absence of any slurm-g-eda-exp011-analyze-*.out log until then). The
+# --gpus-per-node=1 below is requested-but-unused for exactly that reason, not a real GPU need.
 #
 # Usage: sbatch singularity_analyze.sh
 

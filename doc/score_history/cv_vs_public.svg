@@ -9,7 +9,7 @@ text { font-family: Inter, DejaVu Sans, Arial, sans-serif; fill: #172033; }
 </style>
 <rect width="920" height="760" fill="#ffffff"/>
 <text x="28" y="36" class="title">Five-fold OOF vs Public LB</text>
-<text x="28" y="58" class="subtitle">Historical E-3 audit; all-pair Spearman=0.970, pure-model Spearman=0.973.</text>
+<text x="28" y="58" class="subtitle">Historical E-3 audit; all-pair Spearman=0.971, pure-model Spearman=0.973.</text>
 <line x1="187.2" y1="96" x2="187.2" y2="678" stroke="#dbe3ee"/>
 <text x="187.2" y="702" text-anchor="middle" class="small">0.610</text>
 <line x1="318.8" y1="96" x2="318.8" y2="678" stroke="#dbe3ee"/>
@@ -32,7 +32,7 @@ text { font-family: Inter, DejaVu Sans, Arial, sans-serif; fill: #172033; }
 <text x="80" y="227.4" text-anchor="end" class="small">0.740</text>
 <line x1="90" y1="66.7" x2="870" y2="66.7" stroke="#dbe3ee"/>
 <text x="80" y="70.7" text-anchor="end" class="small">0.760</text>
-<line x1="90.0" y1="662.1" x2="870.0" y2="73.1" stroke="#dc2626" stroke-width="2"/>
+<line x1="90.0" y1="674.5" x2="870.0" y2="68.1" stroke="#dc2626" stroke-width="2"/>
 <circle cx="817.4" cy="127.4" r="6" fill="#2563eb"/>
 <text x="825.4" y="120.4" class="small">exp003</text>
 <circle cx="458.9" cy="339.0" r="6" fill="#2563eb"/>
@@ -59,6 +59,8 @@ text { font-family: Inter, DejaVu Sans, Arial, sans-serif; fill: #172033; }
 <text x="185.5" y="585.3" class="small">exp018</text>
 <circle cx="142.6" cy="646.6" r="6" fill="#2563eb"/>
 <text x="150.6" y="639.6" class="small">exp035_no_dilation</text>
+<path d="M 222.4 616.0 L 234.4 628.0 M 234.4 616.0 L 222.4 628.0" stroke="#d97706" stroke-width="2.5"/>
+<text x="236.4" y="615.0" class="small">exp038</text>
 <text x="480.0" y="742" text-anchor="middle" class="label">5-fold OOF tile RMSE</text>
 <text x="20" y="387.0" text-anchor="middle" transform="rotate(-90 20 387.0)" class="label">Public RMSE</text>
 </svg>

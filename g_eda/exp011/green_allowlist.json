@@ -10,6 +10,30 @@
     "exp040_metric": {
       "status": "green",
       "registry_note": "context_rows: 1. metric_weight=0.6 tile-RMSE-shaped loss. Standalone green model, weaker solo (0.6955180267195701) but earmarked for Track G3 blend diversity."
+    },
+    "exp056": {
+      "status": "green",
+      "registry_note": "context_rows: 1. mean-intensity x normalized-shape factorization (factorized_mean_shape), from-scratch CompactUNet backbone. Solo LB 0.6839627937847801 (2026-07-24), submission_gate.py GO."
+    },
+    "exp064_effb3": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm efficientnet_b3 encoder (ImageNet, Apache-2.0). NEW green champion, solo LB 0.6720097338314985 (2026-07-30)."
+    },
+    "exp064_effv2s": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm tf_efficientnetv2_s encoder (ImageNet, Apache-2.0). Solo LB 0.6740019855472996 (2026-07-30), 2nd best."
+    },
+    "exp064_swin_lr2e4": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm swin_tiny_patch4_window7_224 encoder (ImageNet, MIT), lr=2e-4 (lr=1e-3 arm NaN-diverged, not used). fold0/4 gate-passed (best gate result since exp056); 5-fold trained 2026-07-29, not yet submitted to LB."
+    },
+    "exp064_pvt_v2_b0_lr2e4": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm pvt_v2_b0 encoder (ImageNet, Apache-2.0). New backbone family (Pyramid Vision Transformer v2), architecturally distinct from EfficientNet/ConvNeXt/Swin. Solo LB 0.672541575619076 (2026-08-01), effective tie with exp064_effb3."
+    },
+    "exp064_swin_small_lr2e4": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm swin_small_patch4_window7_224 encoder (ImageNet, MIT), lr=2e-4. Capacity scale-up of exp064_swin_lr2e4. Solo LB 0.6719466133572829 (2026-08-01), worse than swin_lr2e4 by +0.00151."
     }
   }
 }

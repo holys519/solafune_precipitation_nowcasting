@@ -81,6 +81,28 @@ risk区分を継承する。
 canonical recordを使い、source、record ID/query URL、canonical name、lat/lon、取得日、
 変換scriptを固定保存する。
 
+**2026-08-01追記**: 運営が"[Official] Approved Geocoding Sources — Allowlist & Requests"という
+専用topicを投稿し、上記の許可リストと条件を公式に確定した(ユーザーが投稿本文を転記、
+`discussion/approved_geocoding_sources_ja.md`の既存和訳と内容一致 — ルール変更なし、
+canonical topicとしての再確認)。追加の明確化事項:
+
+- 無料でも登録が必要なsourceは、無料枠で変換を再現できれば利用可
+- rate-limitがあるsourceも、要件は速度ではなく再現可能性なので利用可
+- 有料サービスは不可
+- 許可される変換は「地名→座標のlookup」と「位置・時刻から閉形式で計算する特徴量」
+  (緯度経度、半球、三角関数エンコーディング、solar geometry/local solar time)のみ。
+  標高・海岸線距離・気候区分などは**外部データセットとの結合が必要になるため、
+  ライセンスを問わず禁止**、と明記された(既存方針と一致、変更なし)。
+
+**未回答の公開質問(2026-07-30付、bhaskardeyのコメント、運営未回答)**: (1)
+"tropical"/"subtropical"/"mediterranean"/"temperate"等の気候区分を、外部データセットを
+参照せず緯度経度のしきい値による一般地理知識だけでハードコードするのは許容されるか。
+(2) `bmi_topography`(無料・要APIキーのgeospatial utility、標高・海岸線距離取得用)は
+externalデータセットに該当するか。運営から明示的な回答はまだない。本プロジェクトの既存方針
+(競技の一般規約で気候区分・標高・海岸線距離は外部結合特徴として禁止、上記2026-08-01の
+運営回答もこれを再確認)では、(1)(2)とも安全側でred/使用不可として扱い続ける。運営が
+明確な許可を出すまで、この種の特徴は探索・実装しない。
+
 現状のローカル和訳には公式discussionのpermalink、topic/message ID、投稿日が残っていない。
 最終利用前にログイン済み公式ページからこれらを回収し、回答本文の取得日・checksumまたは
 screenshotも監査証跡へ保存する。それまでは新しいcoordinate-derived modelをgreen finalへ

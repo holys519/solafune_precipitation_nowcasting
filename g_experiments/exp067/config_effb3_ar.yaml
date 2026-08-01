@@ -1,0 +1,101 @@
+experiment:
+  name: exp067_effb3_ar
+  description: "exp064_effb3 (pretrained EfficientNet-B3 + mean-intensity x normalized-shape factorized decoder) plus a fixed autoregressive own-past-prediction input channel (2ch: value+mask, the T-30min row at the same name_location). Fixes exp053's exposure-bias failure (doc/submission_registry.md 2026-08-01 audit: teacher-forcing on GROUND TRUTH during training collapsed catastrophically when substituted with the model's own predictions at eval time, fold0 tile_rmse 0.199->0.614). Here the channel is sourced from a realistic, already-imperfect OOF prediction (g_eda/exp011's champion_ensemble_nested_blend cache) at BOTH train and eval time, so input quality never shifts between training and production. context_rows:1, distributed data only."
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 1
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+  drop_zero_obs_rows: true
+  # unique_id-keyed OOF prediction cache (fold-consistent honest nested-CV predictions from the
+  # current champion ensemble) used to source the fixed autoregressive "previous prediction"
+  # channel -- see dataset.py's load_prev_pred_lookup docstring for the leakage argument.
+  prev_pred_lookup_npz: ../../outputs/g_eda/exp011/champion_ensemble_nested_blend_oof_pred.npz
+
+features:
+  canonical_bands: false
+  engineered: false
+  temporal_abs: false
+  target_time_first: false
+  ir_rain_proxy: false
+  autoregressive_prev_pred: true
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+train:
+  batch_size: 128
+  epochs: 100
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+
+model:
+  architecture: pretrained_factorized
+  in_channels: 56
+  encoder_name: efficientnet_b3
+  decoder_channels: 64
+  internal_size: 160
+  aux_mask_enabled: true
+  clip_min: 0.0
+  mean_intensity_hidden: 64
+  shape_eps: 1.0e-6
+  amount_cap: 150.0
+  bottleneck_dilations: []
+
+loss:
+  name: factorized_mean_shape
+  rain_threshold: 0.0
+  bce_weight: 1.0
+  mean_intensity_weight: 1.0
+  shape_weight: 1.0
+  shape_eps: 1.0e-6
+  aux_mask_weight: 0.2
+  aux_mask_threshold: 0.25
+  aux_dice_weight: 0.5
+  multiscale_weight_2: 0.2
+  multiscale_weight_4: 0.1
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp067_effb3_ar/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp067_effb3_ar
+  output_dir: ../../outputs/submissions/exp067_effb3_ar
+  submission_zip: ../../outputs/submissions/exp067_effb3_ar_submission.zip
+  analysis_dir: ../../outputs/analysis/exp067_effb3_ar
+  norm_stats: norm_stats.json

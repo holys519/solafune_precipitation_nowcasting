@@ -28,6 +28,7 @@ and a raw sweep CSV under outputs/g_eda/exp010/.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import itertools
 import json
@@ -336,10 +337,39 @@ def run_for_source(exp_name: str, data: dict[str, np.ndarray]) -> dict[str, Any]
 
 
 def main() -> None:
+    global CACHE_DIR
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--sources", nargs="+", default=["exp038_sigmafixed", "exp047"],
+        help="OOF cache names to sweep (default: this experiment's original exp038_sigmafixed/exp047 "
+        "scope). 2026-07-30 addition -- e.g. --sources champion_ensemble_nested_blend to re-tune "
+        "against g_eda/exp011/nested_blend.py's honest ensemble OOF instead of a solo model's.",
+    )
+    parser.add_argument(
+        "--cache-dir", type=Path, default=None,
+        help=f"directory containing <source>_oof_pred.npz files (default: {CACHE_DIR}). "
+        "2026-07-30 addition -- point this at outputs/g_eda/exp011 to read nested_blend.py's cache.",
+    )
+    parser.add_argument(
+        "--out-json", default="recommended_causal_weights.json",
+        help="output filename for the machine-readable recommendation, written under this "
+        "experiment's own directory (default: recommended_causal_weights.json, the original "
+        "exp038_sigmafixed-scoped file -- pass a distinct name, e.g. "
+        "recommended_causal_weights_exp065.json, to avoid overwriting it for a different source).",
+    )
+    parser.add_argument(
+        "--report-name", default="CAUSAL_SMOOTHING.md",
+        help="output filename for the human-readable report (default: CAUSAL_SMOOTHING.md).",
+    )
+    args = parser.parse_args()
+
+    if args.cache_dir is not None:
+        CACHE_DIR = args.cache_dir
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     _self_check_guard()
 
-    sources_to_try = ["exp038_sigmafixed", "exp047"]
+    sources_to_try = args.sources
     results: dict[str, Any] = {}
     skipped: list[str] = []
     for exp_name in sources_to_try:
@@ -352,9 +382,8 @@ def main() -> None:
 
     if not results:
         raise FileNotFoundError(
-            "No OOF caches found under outputs/g_eda/exp003/*_oof_pred.npz for "
-            f"{sources_to_try}. Build the exp038_sigmafixed cache first, e.g.:\n"
-            "  cd g_eda/exp003 && sbatch singularity_cache_exp038.sh exp038_sigmafixed exp038 exp038_sigmafixed"
+            f"No OOF caches found under {CACHE_DIR}/*_oof_pred.npz for "
+            f"{sources_to_try}. Build the cache first (see this file's --cache-dir/--sources help)."
         )
 
     all_csv_rows: list[dict[str, Any]] = []
@@ -399,11 +428,11 @@ def main() -> None:
             writer.writeheader()
             writer.writerows(all_csv_rows)
 
-    recommended_path = EXP010_DIR / "recommended_causal_weights.json"
+    recommended_path = EXP010_DIR / args.out_json
     recommended_path.write_text(json.dumps(results[primary]["recommendation"], indent=2) + "\n",
                                  encoding="utf-8")
 
-    report_path = EXP010_DIR / "CAUSAL_SMOOTHING.md"
+    report_path = EXP010_DIR / args.report_name
     report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
     print("\n".join(report_lines), flush=True)
     print(f"\nwrote {recommended_path}", flush=True)

@@ -19,6 +19,60 @@
       "oof_cache": "outputs/g_eda/exp011/exp040_metric_oof_pred.npz",
       "public_rmse_solo": 0.6955180267195701,
       "notes": "architecturally distinct 2nd model (metric_weight=0.6 tile-RMSE-shaped loss). Weaker solo but earmarked for blend diversity (Track G3)."
+    },
+    {
+      "name": "exp056",
+      "module_dir": "exp056",
+      "checkpoint_dir": "exp056",
+      "eval_pred_dir": "outputs/submissions/exp056/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp056_oof_pred.npz",
+      "public_rmse_solo": 0.6839627937847801,
+      "notes": "2026-07-30 addition: from-scratch CompactUNet factorized-head champion architecture (seed42). Architecturally distinct from the exp064 pretrained-encoder family -- included for architecture-diverse ensembling with the new champion (round8 plan 2026-07-30 update, item (b))."
+    },
+    {
+      "name": "exp064_effb3",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_effb3",
+      "eval_pred_dir": "outputs/submissions/exp064_effb3/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_effb3_oof_pred.npz",
+      "public_rmse_solo": 0.6720097338314985,
+      "notes": "2026-07-30 addition: NEW green champion. timm efficientnet_b3 pretrained encoder + exp056's factorized decoder head. fold0/4 gate called this 'mixed' but full 5-fold LB beats the prior champion by -0.01076 -- the gate underestimated this axis."
+    },
+    {
+      "name": "exp064_effv2s",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_effv2s",
+      "eval_pred_dir": "outputs/submissions/exp064_effv2s/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_effv2s_oof_pred.npz",
+      "public_rmse_solo": 0.6740019855472996,
+      "notes": "2026-07-30 addition: 2nd-best solo. timm tf_efficientnetv2_s pretrained encoder, same decoder head as exp064_effb3. Same encoder family as the champion -- lower ensembling-diversity value than exp056 or exp064_swin_lr2e4, but strong solo score."
+    },
+    {
+      "name": "exp064_swin_lr2e4",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_swin_lr2e4",
+      "eval_pred_dir": "outputs/submissions/exp064_swin_lr2e4/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_swin_lr2e4_oof_pred.npz",
+      "public_rmse_solo": 0.6704384663890527,
+      "notes": "2026-07-30 addition: timm swin_tiny_patch4_window7_224 (transformer, architecturally most distinct from the EfficientNet-family champion -- highest ensembling-diversity value). fold0/4 gate-passed cleanly (best gate result since exp056, f0 0.27404/f4 0.58572), and confirmed on LB: solo 0.6704384663890527 (2026-07-30 16:04:15), beats exp064_effb3 by -0.00157. Got the highest nested_blend.py ensemble weight (0.315, tied with effb3) in exp065_champion_ensemble_causal, the new overall champion."
+    },
+    {
+      "name": "exp064_pvt_v2_b0_lr2e4",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_pvt_v2_b0_lr2e4",
+      "eval_pred_dir": "outputs/submissions/exp064_pvt_v2_b0_lr2e4/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_pvt_v2_b0_lr2e4_oof_pred.npz",
+      "public_rmse_solo": 0.672541575619076,
+      "notes": "2026-08-01 addition: timm pvt_v2_b0 (Pyramid Vision Transformer v2), a new backbone family distinct from all 5 existing manifest members' families (from-scratch CNN, EfficientNet, EfficientNetV2, Swin). Solo LB is an effective tie with exp064_effb3 (+0.00053, within noise), but per this project's own precedent (swin_lr2e4 got the highest blend weight despite not being the best solo) architectural distinctness may still carry ensembling value -- included to test that."
+    },
+    {
+      "name": "exp064_swin_small_lr2e4",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_swin_small_lr2e4",
+      "eval_pred_dir": "outputs/submissions/exp064_swin_small_lr2e4/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_swin_small_lr2e4_oof_pred.npz",
+      "public_rmse_solo": 0.6719466133572829,
+      "notes": "2026-08-01 addition: timm swin_small_patch4_window7_224, capacity scale-up of exp064_swin_lr2e4 (same transformer family, worse solo LB +0.00151 vs Tiny). Included mainly to check whether it adds anything on top of swin_lr2e4 already being in the manifest -- expect low/negative marginal value since it's the same family, not excluded a priori to let the outer-cross-fit decide."
     }
   ]
 }

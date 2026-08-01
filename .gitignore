@@ -51,7 +51,7 @@ l_model/
 models/
 
 # Experiment outputs
-outputs/
+outputs
 logs/
 eda/outputs/.mplconfig/
 l_experiments/*/output/

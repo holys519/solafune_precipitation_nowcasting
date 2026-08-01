@@ -1,0 +1,119 @@
+experiment:
+  name: exp066_attention_cr2
+  description: "2026-07-31: 'proper temporal architecture for history' (round8 plan's queued Next
+    Generations item), replacing exp063's crude channel-stack of predecessor rows with a shared
+    per-frame encoder + ConvLSTM temporal fusion at the bottleneck, feeding the same
+    factorized_mean_shape decoder/heads as the champion lineage (exp056/exp064). Same information
+    budget as exp063_cr2 (context_rows:2 = current row + T-30, in_channels:105) so this is a clean
+    architecture-only comparison against exp063_cr2's crude-stack result (fold0 0.28302/fold4
+    0.59143, both worse than the cr1 baseline 0.28159/0.58503 -- closed as a failure). If proper
+    temporal fusion beats exp063_cr2 at the SAME information budget, that separates 'history helps
+    but crude stacking couldn't use it' from 'history genuinely doesn't help this task'. All inputs
+    strictly <T (causal), predecessor rows only -- same legal history axis as exp063, re-verify
+    with scripts/verify_causal_replay.py before any submission. model.py: TemporalFusionFactorizedUNet,
+    model.temporal_fusion: attention."
+  seed: 42
+
+data:
+  train_csv: ../../data/train_dataset/train_dataset.csv
+  evaluation_csv: ../../data/evaluation_dataset/evaluation_target.csv
+  train_dir: ../../data/train_dataset
+  evaluation_dir: ../../data/evaluation_dataset
+  sample_submission_dir: ../../data/sample_submission
+  max_observations: 3
+  context_rows: 2
+  satellite_channels: 16
+  target_height: 41
+  target_width: 41
+  drop_zero_obs_rows: true
+
+# Strict-green arm only, unchanged from exp038/exp063: raw distributed bands, no successor rows,
+# no wavelength-alignment feature engineering. Keeps this a pure architecture-only ablation against
+# exp063_cr2 at the identical information budget (channels_per_row must stay 0 -- required by
+# TemporalFusionFactorizedUNet, which does not support the `engineered` row-feature extras).
+features:
+  canonical_bands: false
+  engineered: false
+  temporal_abs: false
+  target_time_first: false
+  ir_rain_proxy: false
+
+split:
+  strategy: group_kfold
+  n_splits: 5
+  fold: 0
+  max_train_samples: null
+  max_valid_samples: null
+
+train:
+  # batch_size reduced from exp063's 128: the shared per-frame encoder runs B*context_rows*
+  # max_observations = B*6 forward passes per step (vs B*1 for the crude single-pass baseline),
+  # so this keeps peak activation memory in the same ballpark as the existing 5-fold jobs.
+  batch_size: 32
+  epochs: 100
+  lr: 0.001
+  weight_decay: 0.0001
+  num_workers: 12
+  amp: true
+  grad_clip_norm: 1.0
+  augment: true
+  # 2026-07-31: added from the start -- see exp064_effb4/exp064_convnext_small_lr2e4 postmortem
+  # (train.py's checkpoint save is already synchronous on every validation improvement, so this
+  # only saves wasted epochs, never correctness).
+  early_stopping_patience: 20
+  early_stopping_min_delta: 0.0
+
+model:
+  architecture: temporal_fusion_factorized
+  in_channels: 105
+  base_channels: 32
+  internal_size: 128
+  aux_mask_enabled: true
+  clip_min: 0.0
+  mean_intensity_hidden: 64
+  shape_eps: 1.0e-6
+  amount_cap: 150.0
+  bottleneck_dilations: []
+  temporal_fusion: attention
+
+loss:
+  name: factorized_mean_shape
+  rain_threshold: 0.0
+  bce_weight: 1.0
+  mean_intensity_weight: 1.0
+  shape_weight: 1.0
+  shape_eps: 1.0e-6
+  aux_mask_weight: 0.2
+  aux_mask_threshold: 0.25
+  aux_dice_weight: 0.5
+  multiscale_weight_2: 0.2
+  multiscale_weight_4: 0.1
+
+tta:
+  enabled: true
+  flip: true
+
+metric:
+  selection: tile_rmse
+
+postprocess:
+  use_oof_calibration: false
+  calibration_mode: linear
+  rain_prob_threshold: 0.0
+  rain_prob_threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  value_threshold: 0.10
+  value_threshold_grid: [0.0, 0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25]
+  temporal_smoothing:
+    enabled: false
+    center_weight: 0.70
+    prev_weight: 0.15
+    next_weight: 0.15
+    max_gap_minutes: 30
+  calibration_path: ../../outputs/analysis/exp066_attention_cr2/oof_calibration.json
+
+paths:
+  model_dir: ../../g_model/exp066_attention_cr2
+  output_dir: ../../outputs/submissions/exp066_attention_cr2
+  submission_zip: ../../outputs/submissions/exp066_attention_cr2_submission.zip
+  analysis_dir: ../../outputs/analysis/exp066_attention_cr2
+  norm_stats: norm_stats.json

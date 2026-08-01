@@ -24,10 +24,12 @@ in-sample score `optimize_blend.py --analyze` reports. The gap between the two I
 overfitting `doc/public_scores.md` flagged -- this script reports it explicitly rather than
 requiring another failed submission to notice it next time.
 
-Currently implements N in {1, 2, 3} sources (global weight only, no per-satellite split -- with
-as few as 2 locations in outer fold 0, splitting further by satellite would leave single-digit
-tile counts per cell). N > 3 nested CV is not implemented yet; extend this file when the harvest
-needs it (see `search_greedy` in optimize_blend.py for the in-sample N>3 pattern to generalize).
+Implements N in {1, 2, 3} exactly (grid/simplex search) and N > 3 via greedy forward blend-in
+(2026-07-30, added for the exp056 / exp064_effb3 / exp064_effv2s / exp064_swin_lr2e4 4-source
+architecture-diverse ensemble -- see `fit_weight()` below, ported from `optimize_blend.py`'s
+`search_greedy` global-path branch). Global weight only, no per-satellite split -- with as few as
+2 locations in outer fold 0, splitting further by satellite would leave single-digit tile counts
+per cell.
 
 Usage:
     python3 nested_blend.py                                # uses sources.json, same manifest as optimize_blend.py
@@ -133,10 +135,36 @@ def fit_weight(names: list[str], aligned_subset: dict[str, np.ndarray], target_s
                     best_val = val
                     best_weights = {names[0]: round(w0, 2), names[1]: round(w1, 2), names[2]: round(w2, 2)}
         return best_weights
-    raise NotImplementedError(
-        f"nested CV not implemented for N={len(names)} sources yet -- extend fit_weight() "
-        "(see search_greedy in optimize_blend.py for the in-sample N>3 pattern to generalize)"
-    )
+    # N > 3: greedy forward blend-in, restricted to this call's subset only (this function is
+    # always called with either the full OOF or one outer-fold's TRAIN-only subset -- see
+    # nested_cross_fit below -- so "restricted to this subset" is what keeps the outer fold honest;
+    # the caller must never pass the held-out fold's tiles in here). Global weight only, no
+    # per-satellite split, consistent with this file's 2-way/3-way branches above (mirrors
+    # optimize_blend.py's search_greedy global-path branch, lines ~376-397, without the
+    # per-satellite variant that function also computes -- that variant isn't meaningful here since
+    # each outer fold's 2-location subset would leave single-digit per-satellite tile counts).
+    step = 0.05
+    solo_scores = {n: float(ob.tile_rmse(aligned_subset[n], target_subset).mean()) for n in names}
+    remaining = set(names)
+    first = min(remaining, key=lambda n: solo_scores[n])
+    remaining.remove(first)
+    weights = {first: 1.0}
+    current_pred = aligned_subset[first].copy()
+    while remaining:
+        best = None  # (candidate, w_new, value, pred)
+        for candidate in remaining:
+            for w_new in np.round(np.arange(0.0, 1.0001, step), 2):
+                pred = (1.0 - w_new) * current_pred + w_new * aligned_subset[candidate]
+                value = float(ob.tile_rmse(pred, target_subset).mean())
+                if best is None or value < best[2]:
+                    best = (candidate, w_new, value, pred)
+        chosen, w_new, _, pred = best
+        for name in weights:
+            weights[name] *= (1.0 - w_new)
+        weights[chosen] = weights.get(chosen, 0.0) + w_new
+        current_pred = pred
+        remaining.remove(chosen)
+    return {n: round(w, 4) for n, w in weights.items()}
 
 
 def blend_pred(names: list[str], aligned_subset: dict[str, np.ndarray], weights: dict[str, float]) -> np.ndarray:
@@ -226,6 +254,30 @@ def write_oof_sample_metrics(result: dict, target: np.ndarray, satellite: np.nda
     return out_dir
 
 
+def write_oof_pred_npz(result: dict, target: np.ndarray, satellite: np.ndarray,
+                        unique_id: np.ndarray, fold: np.ndarray, out_name: str) -> Path:
+    """2026-07-30 addition: cache the honest nested-CV blended prediction array in the same
+    schema `optimize_blend.py`'s `build_cache`/`g_eda/exp003`'s caches use (pred/target/
+    unique_id/satellite/fold, fp16), so downstream post-processing sweeps that expect that
+    schema (e.g. `g_eda/exp010/run_causal_smoothing_sweep.py`) can re-tune against the ENSEMBLE's
+    own OOF predictions instead of a solo member's -- the whole point being that causal-smoothing
+    coefficients fit on `exp038_sigmafixed` solo (as exp065 initially shipped, unavoidably, since
+    this cache didn't exist yet) are not guaranteed to be right for a 4-way blend's error
+    structure. Written next to `nested_blend_report.json` in OUT_DIR.
+    """
+    path = OUT_DIR / f"{out_name}_oof_pred.npz"
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        path,
+        pred=result["nested_pred"].astype(np.float16),
+        target=target.astype(np.float16),
+        unique_id=unique_id,
+        satellite=satellite,
+        fold=fold.astype(np.int8),
+    )
+    return path
+
+
 def write_report(result: dict, manifest_names: list[str]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     serializable = {k: v for k, v in result.items() if k != "nested_pred"}
@@ -290,6 +342,9 @@ def main() -> None:
     out_dir = write_oof_sample_metrics(result, target, satellite, unique_id, fold, loc_map, out_name)
     print(f"wrote {out_dir / 'oof_sample_metrics.csv'} "
           f"(usable as --candidate {out_name} in l_eda/exp005)")
+
+    npz_path = write_oof_pred_npz(result, target, satellite, unique_id, fold, out_name)
+    print(f"wrote {npz_path} (usable as a g_eda/exp010-style OOF pred cache for post-process tuning)")
 
     write_report(result, names)
 

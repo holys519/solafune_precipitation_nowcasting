@@ -34,6 +34,10 @@
     "exp064_swin_small_lr2e4": {
       "status": "green",
       "registry_note": "context_rows: 1. pretrained_factorized architecture, timm swin_small_patch4_window7_224 encoder (ImageNet, MIT), lr=2e-4. Capacity scale-up of exp064_swin_lr2e4. Solo LB 0.6719466133572829 (2026-08-01), worse than swin_lr2e4 by +0.00151."
+    },
+    "exp064_convnext_lr2e4": {
+      "status": "green",
+      "registry_note": "context_rows: 1. pretrained_factorized architecture, timm convnext_tiny encoder (ImageNet, MIT), lr=2e-4. Fully 5-fold trained 2026-07-27, OOF-scored and submission zip built 2026-08-01 (never previously scored past a fold0/4 tie). 5-fold OOF 0.60442, no solo LB yet."
     }
   }
 }

@@ -73,6 +73,15 @@
       "oof_cache": "outputs/g_eda/exp011/exp064_swin_small_lr2e4_oof_pred.npz",
       "public_rmse_solo": 0.6719466133572829,
       "notes": "2026-08-01 addition: timm swin_small_patch4_window7_224, capacity scale-up of exp064_swin_lr2e4 (same transformer family, worse solo LB +0.00151 vs Tiny). Included mainly to check whether it adds anything on top of swin_lr2e4 already being in the manifest -- expect low/negative marginal value since it's the same family, not excluded a priori to let the outer-cross-fit decide."
+    },
+    {
+      "name": "exp064_convnext_lr2e4",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_convnext_lr2e4",
+      "eval_pred_dir": "outputs/submissions/exp064_convnext_lr2e4/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_convnext_lr2e4_oof_pred.npz",
+      "public_rmse_solo": null,
+      "notes": "2026-08-01 addition: timm convnext_tiny (modern CNN family, distinct from EfficientNet/Swin/PVTv2 -- none of the other 6 manifest members use a ConvNeXt-style encoder), lr=2e-4. Trained 2026-07-27 but never scored past a fold0/4 'tie' verdict against the champion baseline until this 2026-08-01 audit revived it; full 5-fold OOF is 0.60442 (comparable to effv2s' 0.60443). No solo LB yet -- included here to test blend-diversity value ahead of a possible solo submission."
     }
   ]
 }

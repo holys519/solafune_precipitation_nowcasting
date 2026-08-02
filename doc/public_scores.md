@@ -1,12 +1,73 @@
 # Public Scores
 
-Last updated: 2026-08-01
+Last updated: 2026-08-02
+
+**2026-08-02 追記16: exp064_effb3_seed_ens_42_456を実測、両メンバーを上回る。**
+`exp064_effb3_seed_ens_42_456_submission.zip` = **0.6713977780148311** (2026/08/03 06:43:36 JST)。
+effb3 seed42単体(0.6720097338314985)比 **-0.00061**、seed456単体(0.6758692035492916)比
+**-0.00447**、**両メンバーを上回る誤差相殺型アンサンブル**。exp056の2-seedアンサンブル
+(seed42+456が両メンバーを上回った前例)がpretrained backbone系統でも再現することを確認。
+championの6-way(0.66703)には及ばないが、championブレンド内のeffb3(重み約0.20)を
+この2-seed版に差し替える余地はある(推定効果は小さくノイズ帯級、優先度は低い)。
+
+**2026-08-02 追記15: exp067(exposure bias対策版の自己回帰入力)はNO-GO、クローズ。
+探索を拡大 — EfficientNet-B0/B1/B2(「小さい方が勝つ」パターンのさらなる検証)と、
+未着手の新backbone系統(RegNetY、DenseNet)のfold0/4ゲートを投入。**
+
+- `exp067_effb3_ar`(champion 6-wayのnested OOF予測を「過去の自分の予測」入力に使う、
+  exp053のexposure bias対策版): teacher-forcing的な学習指標(0.28656/0.58727)と自己予測代入
+  (本番相当、0.29933/0.61103)の乖離はexp053の壊滅的な値(+0.4〜0.5)から+0.01〜0.024まで
+  大幅縮小し、設計上の修正は機能した。しかし**両fold ともchampionベースライン(0.28159/0.58503)
+  より明確に悪化**しており、mixed/tieではないクリーンな棄却。フル5-fold学習は行わずクローズ。
+  「自己回帰的な過去予測の再利用」というアイデア自体が(exposure biasを取り除いても)この
+  タスク・アーキテクチャには効かないという結論。
+- 探索拡大: `exp064_effb0`/`effb1`/`effb2`(EfficientNet-B3<B4で確認した「小さい方が勝つ」
+  パターンをB3からさらに下方向に検証)、`exp064_regnety016`/`densenet121`(未着手の新backbone
+  系統、いずれもtimm経由でpretrained_factorizedアーキテクチャに接続、プリフライトチェック
+  (forward/backward通過)済み)のfold0/4ゲート学習を投入(2026-08-02)。
+
+**fold0/4ゲート結果(effb3自身のgate値 fold0=0.28833/fold4=0.58135比)**:
+
+| backbone | fold0 | fold4 | 判定 |
+| --- | ---: | ---: | --- |
+| effb0 | +0.00074(ノイズ内) | +0.00219(悪化) | 明確な負け、フル5-fold見送り |
+| **effb1** | **-0.00572** | -0.00018(タイ) | **クリーンpass** |
+| **effb2** | **-0.00504** | -0.00021(タイ) | **クリーンpass** |
+| regnety016 | **-0.00808** | +0.00632(悪化) | mixed(新backbone系統) |
+| densenet121 | **-0.01007(全候補中最良)** | +0.00846(悪化) | mixed(新backbone系統) |
+
+effb1/effb2は「B3<B4」に続き「B1/B2<B3」も成立する形でクリーンにpass — EfficientNet系統では
+一貫して小さい方が勝ち続けている。regnety016/densenet121はfold0が全候補中最良だがfold4で
+崩れるmixedパターン(effb3/effv2s登場時と同型)。effb0は明確な負けで見送り。
+残り4系統(effb1/effb2/regnety016/densenet121)のフル5-fold(fold1/2/3)を投入(2026-08-02)。
+
+**2026-08-02 追記13: exp064_convnext_lr2e4(ConvNeXt-Tiny)実測、「同系統内は小さい方が勝つ」
+パターンの初めての反例。ConvNeXt系統はサイズ非依存で本タスクと相性が悪いと確定。**
+
+- `exp064_convnext_lr2e4_submission.zip` = **0.6837550386507026** (2026/08/02 09:47:01)。
+  5-fold OOF (0.60442) はeffv2s相当で期待していたが、実測LBはconvnext_small(0.6793384249392268、
+  exp064系全体で最下位だった)より**さらに+0.00402悪化**、exp064系の新たな最下位。
+  EfficientNet(b3<b4)・Swin(tiny<small)では「小さい方が勝つ」が一貫していたが、**ConvNeXtは
+  逆転し、Tiny(0.68376)がSmall(0.67934)より悪い** — 家族固有のパターンで、一般法則ではない
+  ことが判明。同時に、5-fold OOF(0.60442)は今回もLBを正しく予測できず(effv2s相当のOOFから
+  effv2sのLB 0.67400を期待したが実測は+0.01)、**「pretrained backboneの詳細な順位付けに
+  OOFは使えない」という教訓を改めて補強**。ConvNeXt系統はTiny/Small両方が実測で明確に負けており、
+  このバックボーン系統の探索は完全にクローズ。7-wayブレンドでも寄与ほぼゼロだった
+  (追記12参照)ことと合わせ、championは6-way(0.66703)のまま。
 
 **2026-08-01 追記11: exp064_convnext_lr2e4(ConvNeXt-Tiny)を発掘。2026-07-27にfold0/4「タイ」
 判定のまま放置され、5-fold学習済みなのに一度もOOF集計・LB提出されていなかった。5-fold OOFは
 0.60442(effv2sの0.60443とほぼ同値)で、最下位だったconvnext_small(LB 0.67934)より明確に
 良い可能性が高い — 「同系統内は小さい方が勝つ」パターンの追加確認候補。zip構築済み、
 LB未提出、明日の提出優先候補の一つ。**
+
+**2026-08-01 追記12: convnext_lr2e4を7-way champion候補としてブレンド検証したが、ほぼ寄与なし。**
+`nested_blend.py --sources`にexp064_convnext_lr2e4を追加した7-way honest nested score =
+**0.58488**、6-way(0.58493)比 **-0.00005とノイズ帯内**。平均ブレンド重みも0.058と小さく、
+既存6メンバー(特にexp056/effb3/effv2sのCNN系統)と誤差パターンがかなり重複していると見られる。
+submission_gate.py自体はGO判定(effb3比-0.01270)だが6-wayと実質同一のため、7-wayを新規に
+LB提出する価値はない — **6-way championをそのまま維持**。convnext_lr2e4はブレンドではなく
+単体提出候補として評価する(OOF 0.60442はeffv2s相当、LB 0.674前後を期待)。
 
 **2026-08-01 追記10: exp065 6-wayアンサンブルが新champion。「アーキテクチャの異質性は単体で
 勝てなくてもブレンドに効く」という仮説がLBで実証された。**
@@ -243,13 +304,15 @@ Sources:
 | -1.5 | exp065_champion_ensemble_v2_causal | `exp065_champion_ensemble_v2_causal.zip` | 0.6684780268241325 | 2026/07/30 23:08:29 | valid | **[ELIGIBLE — superseded by 6-way]** same 4-way ensemble as v1, only the post-processing (causal smoothing tap weights, blur sigma, per-satellite thresholds) re-tuned. Beats v1 by -0.00118 -- a low-degree-of-freedom change, transferred cleanly OOF-to-LB as usual for this category of change |
 | -1 | exp065_champion_ensemble_causal | `exp065_champion_ensemble_causal.zip` | 0.6696622672831182 | 2026/07/30 16:03:44 | valid | **[ELIGIBLE — superseded by v2]** architecture-diverse 4-way ensemble (exp056/effb3/effv2s/swin_lr2e4) weighted by `g_eda/exp011/nested_blend.py`'s outer-cross-fit fit (effb3=0.315, swin_lr2e4=0.315, exp056=0.27, effv2s=0.10) + causal-only smoothing. Nested OOF -0.01191 vs best solo, overfitting_gap -0.00049 (honest), submission_gate.py GO. Beats exp064_effb3 by -0.00235 |
 | -0.5 | exp064_swin_lr2e4 | `exp064_swin_lr2e4_submission.zip` | 0.6704384663890527 | 2026/07/30 16:04:15 | valid | **[ELIGIBLE — 2nd best solo]** pretrained Swin-Tiny (transformer) backbone, lr=2e-4, 5-fold. This was the one exp064 arm with a CLEAN fold0/4 gate PASS (not mixed/tie) -- and it also delivered on LB, beating exp064_effb3 by -0.00157. Refines this session's gate-reliability finding: clean passes remain trustworthy signal, the failure mode was specifically dismissing mixed/tie verdicts |
+| -0.3 | exp064_effb3_seed_ens_42_456 | `exp064_effb3_seed_ens_42_456_submission.zip` | 0.6713977780148311 | 2026/08/03 06:43:36 | valid | **[ELIGIBLE]** equal-weight average of exp064_effb3 seed42 + seed456 eval predictions. Beats BOTH solo members (seed42 -0.00061, seed456 -0.00447) -- genuine variance-reduction ensemble, mirrors exp056_seed_ens_42_456's success in the pretrained-backbone family. Still well short of the 6-way champion (0.66703); mainly interesting as a possible drop-in upgrade for effb3's slot in that blend |
 | -0.2 | exp064_swin_small_lr2e4 | `exp064_swin_small_lr2e4_submission.zip` | 0.6719466133572829 | 2026/08/01 12:05:44 | valid | **[ELIGIBLE, but a regression vs swin_lr2e4]** pretrained Swin-Small (scaled up from swin_lr2e4/Tiny), 5-fold. OOF improved -0.00080 vs Tiny, but realized LB is **+0.00151 worse** than Tiny -- same OOF-improves/LB-worsens inversion seen for effb4 and convnext_small. Closes the capacity-scale-up axis for all 3 pretrained families tested (EfficientNet/ConvNeXt/Swin) |
 | 0 | exp064_effb3 | `exp064_effb3_submission.zip` | 0.6720097338314985 | 2026/07/30 07:16:38 | valid | **[ELIGIBLE — superseded by exp065 ensemble]** solo pretrained EfficientNet-B3 backbone, 5-fold. fold0/4 gate had called this "mixed" (fold4 good/fold0 worse vs champion baseline) but full 5-fold LB beat the prior champion by -0.01076, far outside noise band -- fold0/4 gate did not predict this; capacity/pretrained-backbone hypothesis reopened |
 | 0a | exp064_pvt_v2_b0_lr2e4 | `exp064_pvt_v2_b0_lr2e4_submission.zip` | 0.672541575619076 | 2026/08/01 11:49:04 | valid | **[ELIGIBLE, effective tie with effb3]** solo pretrained PVTv2-B0 (new backbone family) backbone, 5-fold. 5-fold OOF was the best of any solo model measured this session (0.59617 vs effb3's 0.59758) but realized LB is +0.00053 vs effb3 -- within noise band, not a real win. Sub-0.005 OOF gaps between competitive pretrained backbones do not reliably predict LB order |
 | 0b | exp064_effv2s | `exp064_effv2s_submission.zip` | 0.6740019855472996 | 2026/07/30 07:17:24 | valid | **[ELIGIBLE]** solo pretrained EfficientNetV2-S backbone, 5-fold. fold0/4 gate called this a tie with champion baseline; full 5-fold LB beats prior champion by -0.00877 |
 | 0b1 | exp064_effb3_seed456 | `exp064_effb3_seed456_submission.zip` | 0.6758692035492916 | 2026/08/01 11:49:30 | valid | **[ELIGIBLE, worse than effb3 seed42]** effb3 architecture, seed456 instead of the champion seed42. OOF was seed42 +0.00932 worse; realized LB is +0.00386 worse (~41% OOF-to-LB transfer). Confirms exp056-style seed noise (~0.004-0.01) reproduces in the pretrained-backbone family too. Not a solo candidate, but a 2-seed effb3 ensemble (42+456) is now worth testing, mirroring exp056_seed_ens_42_456's success |
 | 0c | exp064_effb4 | `exp064_effb4_submission.zip` | 0.6771412784573648 | 2026/07/31 08:30:47 | valid | **[ELIGIBLE, but a regression]** solo pretrained EfficientNet-B4 (scaled up from champion effb3), 5-fold. +0.00513 vs effb3 -- within-family capacity scale-up does NOT help for EfficientNet, closes that axis |
-| 0d | exp064_convnext_small_lr2e4 | `exp064_convnext_small_lr2e4_submission.zip` | 0.6793384249392268 | 2026/07/31 08:31:17 | valid | **[ELIGIBLE, worst of the exp064 family]** solo pretrained ConvNeXt-Small, lr=2e-4, 5-fold. Worse than every other exp064 arm including effb4; combined with convnext_lr2e4 (tiny)'s earlier fold0/4 tie, ConvNeXt looks size-independently weak for this task, not just under-scaled |
+| 0d | exp064_convnext_small_lr2e4 | `exp064_convnext_small_lr2e4_submission.zip` | 0.6793384249392268 | 2026/07/31 08:31:17 | valid | **[ELIGIBLE]** solo pretrained ConvNeXt-Small, lr=2e-4, 5-fold. Worse than every other exp064 arm including effb4; superseded as exp064 family's worst by convnext_lr2e4 (Tiny) below |
+| 0e | exp064_convnext_lr2e4 | `exp064_convnext_lr2e4_submission.zip` | 0.6837550386507026 | 2026/08/02 09:47:01 | valid | **[ELIGIBLE, worst of the exp064 family]** solo pretrained ConvNeXt-Tiny, lr=2e-4, 5-fold. Fully trained 2026-07-27 but never scored past a fold0/4 "tie" until a 2026-08-01 audit revived it; 5-fold OOF (0.60442) looked competitive (effv2s-level) but realized LB is +0.00402 WORSE than convnext_small -- the first case in this project where the smaller variant of a family loses (opposite of EfficientNet b3<b4 and Swin tiny<small). ConvNeXt is size-independently weak; axis fully closed |
 | 11a | exp056_seed_ens_42_456 | `exp056_seed_ens_42_456_submission.zip` | 0.6827721114076882 | 2026/07/26 12:11:07 | valid | **[ELIGIBLE — superseded by exp064_effb3]** equal-weight average of exp056 seed42 + seed456 eval predictions (same green architecture, seed-only diversity). Beats exp056 seed42 solo by -0.00119 and beats BOTH members (0.68396/0.68569) -- genuine variance-reduction ensemble. Seed pairing chosen on public LB (mild overfit); to be re-based on all champion-level seeds once 789/1337/2024 finish |
 | 11a2 | exp056_seed_ensemble | `exp056_seed_ensemble_submission.zip` | 0.6840805442401546 | 2026/07/26 12:10:43 | valid | **[ELIGIBLE]** 3-seed average (42+123+456); +0.00012 vs seed42 solo -- seed123 (0.69111 solo) diluted it back to ~tie. Confirms weak members hurt the average |
 | 11a3 | exp056_seed_ens_4best | `exp056_seed_ens_4best_submission.zip` | 0.6846399729749617 | 2026/07/27 10:14:15 | valid | **[ELIGIBLE, worse than champion]** 4-seed average (42+456+789+2024); +0.00187 vs ens_42_456 champion -- scale-up does not help |
@@ -329,7 +392,9 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/24 17:58:34 | exp056 | `exp056_submission.zip` | 0.6839627937847801 | holyholyholy | valid | Mean-intensity×normalized-shape分解アーキテクチャ (g_eda/exp002のoracle-ladderが示した「残差の支配項はAMOUNT」への正面対応)。exp038_sigmafixed比 -0.00268で**新green champion**。事前にsubmission_gate.pyでGO判定 (OOF Δ-0.00576、80%CI `[-0.00920,-0.00259]`、18/20 locationで改善) — OOFの約47%がLBに転移し、健全な範囲 |
 | 2026/07/30 23:08:29 | exp065_champion_ensemble_v2_causal | `exp065_champion_ensemble_v2_causal.zip` | 0.6684780268241325 | holyholyholy | valid | v1と同じ4-wayアンサンブル、後処理(causal smoothing tap重み・blur sigma・衛星別閾値)のみ再チューニング。v1比 **-0.00118で新green champion**。低自由度の変更で、OOF→LB転写も素直 |
 | 2026/07/31 08:30:47 | exp064_effb4 | `exp064_effb4_submission.zip` | 0.6771412784573648 | holyholyholy | valid | 単体pretrained EfficientNet-B4(effb3からのスケールアップ)、5-fold。effb3比 **+0.00513悪化** — EfficientNet系統内の容量スケールアップはこの軸をEXHAUSTEDにする |
-| 2026/07/31 08:31:17 | exp064_convnext_small_lr2e4 | `exp064_convnext_small_lr2e4_submission.zip` | 0.6793384249392268 | holyholyholy | valid | 単体pretrained ConvNeXt-Small、lr=2e-4、5-fold。exp064系全体で最下位。tiny版(fold0/4 tie)と合わせ、ConvNeXt系統はサイズ非依存でこのタスクとの相性が悪いと判断 |
+| 2026/07/31 08:31:17 | exp064_convnext_small_lr2e4 | `exp064_convnext_small_lr2e4_submission.zip` | 0.6793384249392268 | holyholyholy | valid | 単体pretrained ConvNeXt-Small、lr=2e-4、5-fold。提出時点でexp064系全体最下位 |
+| 2026/08/02 09:47:01 | exp064_convnext_lr2e4 | `exp064_convnext_lr2e4_submission.zip` | 0.6837550386507026 | holyholyholy | valid | 単体pretrained ConvNeXt-Tiny、lr=2e-4、5-fold。2026-07-27にfold0/4「タイ」のまま放置されていたのを発掘。OOF(0.60442)はeffv2s相当で期待したが実測はconvnext_small比**+0.00402悪化**でexp064系新最下位。EfficientNet/Swinで一貫していた「小さい方が勝つ」パターンの初の反例 — ConvNeXtはサイズ非依存で弱いと確定、軸クローズ |
+| 2026/08/03 06:43:36 | exp064_effb3_seed_ens_42_456 | `exp064_effb3_seed_ens_42_456_submission.zip` | 0.6713977780148311 | holyholyholy | valid | effb3のseed42+456等重み平均。seed42単体比**-0.00061**、seed456単体比**-0.00447**で**両メンバーを上回る**。exp056の2-seedアンサンブル成功パターンがpretrained backbone系統でも再現 |
 | 2026/08/01 11:49:04 | exp064_pvt_v2_b0_lr2e4 | `exp064_pvt_v2_b0_lr2e4_submission.zip` | 0.672541575619076 | holyholyholy | valid | 単体pretrained PVTv2-B0(新backbone系統)、5-fold。5-fold OOFは今セッション単体最良(0.59617、effb3の0.59758を上回る)だったが、実測LBはexp064_effb3比 **+0.00053とノイズ帯内の実質タイ** — 0.001台のOOF差はLB順位を予測しないことが判明 |
 | 2026/08/01 11:49:30 | exp064_effb3_seed456 | `exp064_effb3_seed456_submission.zip` | 0.6758692035492916 | holyholyholy | valid | effb3のseed456版。OOFはseed42比+0.00932悪化していたが、実測LB悪化はexp064_effb3比**+0.00386**(OOF差の約41%のみ転移)。exp056で確認済みのseedノイズがpretrained backbone系統でも再現。単体では使えないが、seed42+456の2シードアンサンブルが次候補 |
 | 2026/08/01 11:53:18 | exp064_swin_small_lr2e4 | `exp064_swin_small_lr2e4_submission.zip` | (error) | holyholyholy | error | プラットフォーム側のinternal server errorで未採点(1回目)。再提出して確定 → 下記12:05:44の行を参照 |

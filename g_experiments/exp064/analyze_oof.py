@@ -490,6 +490,16 @@ def analyze_oof(config: dict[str, Any], checkpoint_paths: list[Path], analysis_d
             output = predict_with_tta(model, x, amp=amp, use_flip_tta=use_flip_tta)
             pred = output["pred"].clamp_min(clip_min)
             pred_np = pred.detach().cpu().numpy().astype(np.float32)
+            # clamp_min does not remove NaN (NaN compares False to everything); a small fraction
+            # of inputs can trigger NaN in the model output on some checkpoints (observed on
+            # exp064_effb1 fold0, ~2.4% of meteosat rows) without this being caught during
+            # training (the loss/metric there is pixel-summed over a full batch, diluting a rare
+            # NaN tile). inference.py's postprocess_array already guards eval-time predictions
+            # this way; analyze_oof.py's OOF diagnostics need the same guard so a handful of
+            # NaN tiles don't crash isotonic calibration fitting or silently corrupt aggregate
+            # stats -- affected tiles are still scored (against a now-zero prediction), not
+            # dropped, so pooled OOF numbers remain comparable across experiments.
+            pred_np = np.nan_to_num(pred_np, nan=0.0, posinf=0.0, neginf=0.0)
             target_np = y.detach().cpu().numpy().astype(np.float32)
 
             if "rain_prob" in output:

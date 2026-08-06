@@ -1,6 +1,73 @@
 # Public Scores
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03 (締切直前、最終)
+
+**2026-08-03 追記19(最終): 11-way・effb1/effb2/regnety016/densenet121を全て実測、全滅。
+championは6-way(0.6670330551889574)のまま確定・最終提出。締切直前のため追加実験は打ち切り。**
+
+| 候補 | LB | vs 参照 |
+| --- | ---: | ---: |
+| exp065_champion_ensemble_11way_causal | 0.6680565782544989 | 6-way champion比 **+0.00102悪化** |
+| exp064_effb2 | 0.6741342779317125 | effb3比 +0.00212悪化 |
+| exp064_effb1 | 0.6751330823662545 | effb3比 +0.00312悪化 |
+| exp064_regnety016 | 0.6766230833995243 | effb3比 +0.00461悪化 |
+| exp064_densenet121 | 0.6838780321092115 | effb3比 +0.01187悪化 |
+
+honest nested outer-cross-fit(0.58341、6-way比-0.00152改善予測)は今回もLBを正しく予測できず、
+11-wayは実測で悪化に転じた。effb1/effb2はfold0/4ゲート・5-fold OOFともにeffb3自身を上回って
+いたが、LBでは逆転して負けた — 「EfficientNetは小さい方が勝つ」パターン(B3<B4)はB2/B1へは
+継続しない、家族内スケーリングにも下限があることが判明。regnety016/densenet121も新backbone
+系統としての期待に反し明確に敗北。
+
+**このセッション全体を通じての最重要な教訓**: honest nested-CV OOF・fold0/4ゲート・
+submission_gate.pyのGO判定など、このプロジェクトで積み上げてきた検証手法群をもってしても、
+今回の4系統+11-wayブレンドは全てLBで裏切られた。20訓練地点と評価地点が重複しない
+distribution shiftの影響は、丁寧なCVでも捉えきれないほど大きい場合があるという、
+プロジェクト全体を通じて繰り返し確認されてきた限界の最終確認。
+
+**最終champion: `exp065_champion_ensemble_6way_causal.zip` = 0.6670330551889574。
+締切直前のため、これを最終提出として確定する。**
+
+**2026-08-03 追記18: 11-way championアンサンブル候補を構築、LB未提出だが最有力(→追記19で
+実測、悪化と判明。参考として残す)。**
+
+`exp065_champion_ensemble_11way_causal.zip` — 6-way(exp056/effb3/effv2s/swin_lr2e4/pvt_v2_b0/
+swin_small)にconvnext_lr2e4/effb1/effb2/regnety016/densenet121を加えた11-wayブレンド。
+
+- honest nested (outer-cross-fit) score **0.58341**(best solo pvt_v2_b0の0.59787比-0.01446)、
+  6-wayのnested score(0.58493)から**さらに-0.00152改善**
+- `nested_blend.py`のouter-cross-fit重み: pvt_v2_b0=0.1791/effb1=0.1465/effb3=0.1395/
+  densenet121=0.1454/swin_lr2e4=0.1282/effb2=0.1163/swin_small=0.095/exp056=0.05/
+  **convnext_lr2e4=0/effv2s=0/regnety016=0**(実質的な寄与ゼロで自動的に除外)
+- 真の貢献者はeffb1・effb2・densenet121(いずれも新規学習した4系統のうち3つ) — fold0/4で
+  mixed判定だったregnety016は最終的にブレンドでも寄与ゼロだった一方、同じくmixed判定だった
+  densenet121は大きく寄与した。判定の一貫性は低く、実測(nested CV)で都度確認する必要がある
+  ことを再確認
+- この11-way自身のOOFに再チューニングしたcausal smoothing込みの最終OOFは**0.58279**
+  (6-wayの0.58418から-0.00139改善)
+- `l_eda/exp005/submission_gate.py`: **GO**(point delta -0.01417、80%CI
+  `[-0.01726,-0.01130]`がゼロ除外、gainは18/20 locationに分散)
+- zip検証済み(29091ファイル、破損なし)、**LB未提出、次の提出枠での最優先候補**
+
+**2026-08-03 追記17: effb1/effb2/regnety016/densenet121の4系統フル5-fold完走、4つとも
+提出用zip構築済み。effb2はeffb3自身を上回るOOFで最有力候補。**
+
+| backbone | 5-fold OOF | 備考 |
+| --- | ---: | --- |
+| pvt_v2_b0(参考) | 0.59617 | これまでの単体最良 |
+| **exp064_effb2** | **0.59693** | **NEW — effb3(0.59758)を上回る。「EfficientNetは小さい方が勝つ」がB3→B2でも継続** |
+| exp064_effb3(参考) | 0.59758 | championの主力メンバー |
+| **exp064_effb1** | **0.59934** | NEW |
+| **exp064_densenet121** | **0.59990** | NEW、新backbone系統(exp056/effb3/effv2s/swin/pvt_v2_bと異なるCNN系統) |
+| **exp064_regnety016** | **0.60025** | NEW、新backbone系統 |
+
+いずれもexp056(0.60252)・effv2s/convnext_lr2e4(~0.6044)・effb3_seed456(0.60690)より良好。
+`g_experiments/exp064/analyze_oof.py`にNaNガード(`nan_to_num`)を追加 — effb1のfold0
+チェックポイントが一部meteosat入力で稀にNaNを出す不具合があり(`inference.py`の提出パイプライン
+は既にガード済みで無害だが、OOF診断スクリプトには無かった)、追加して解析を通した。
+zip 4本とも`outputs/submissions/`に構築済み、LB未提出。0.001台のOOF差はLB順位を保証しない
+(pvt_v2_b0の前例)ため過度な期待は禁物だが、同系統内での改善(effb1/effb2)は比較的信頼できる
+シグナル、新系統(densenet121/regnety016)はブレンド多様性としての価値が本命。
 
 **2026-08-02 追記16: exp064_effb3_seed_ens_42_456を実測、両メンバーを上回る。**
 `exp064_effb3_seed_ens_42_456_submission.zip` = **0.6713977780148311** (2026/08/03 06:43:36 JST)。
@@ -300,7 +367,8 @@ Sources:
 | 9 | exp027 | `exp027_half016_half017family_patched.zip` | 0.6806568162687938 | 2026/07/13 12:02:46 | valid | **[RED]** successor-row sources + patch |
 | 10 | exp036 | `exp036_per_satellite_blur0p5_joint_raw.zip` | 0.6824222826340521 | 2026/07/17 10:27:45 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
 | 11 | exp036 | `exp036_per_satellite_sm0p25_blur1_thr0p2_raw.zip` | 0.6834922402930078 | 2026/07/17 10:34:09 | valid | **[RED — 2026-07-20確定]** successor-row sources + row smoothing |
-| -2 | exp065_champion_ensemble_6way_causal | `exp065_champion_ensemble_6way_causal.zip` | 0.6670330551889574 | 2026/08/01 20:14:05 | valid | **[ELIGIBLE — current green champion]** 6-way ensemble (exp056/effb3/effv2s/swin_lr2e4/pvt_v2_b0/swin_small) with weights + causal smoothing both re-fit via `g_eda/exp011/nested_blend.py`'s outer-cross-fit for this exact member set. Beats v2 by -0.00145, v1 by -0.00263. Honest nested OOF improved -0.00395 vs v1 (0.58813 -> 0.58418), ~67% OOF-to-LB transfer. pvt_v2_b0 (a solo tie with effb3) got the largest blend weight (0.2487) -- confirms architectural diversity adds ensemble value even without a solo win |
+| -2.5 | exp065_champion_ensemble_11way_causal | `exp065_champion_ensemble_11way_causal.zip` | 0.6680565782544989 | 2026/08/04 07:46:06 | valid | **[ELIGIBLE, but a regression -- FINAL champion remains the 6-way]** 6-way + convnext_lr2e4/effb1/effb2/regnety016/densenet121. Honest nested OOF predicted -0.00152 improvement over the 6-way (0.58493 -> 0.58341), but realized LB is **+0.00102 WORSE** than the 6-way. Another OOF/LB inversion, on top of an already-honest outer-cross-fit signal -- submitted right at the deadline, too late to react to |
+| -2 | exp065_champion_ensemble_6way_causal | `exp065_champion_ensemble_6way_causal.zip` | 0.6670330551889574 | 2026/08/01 20:14:05 | valid | **[ELIGIBLE — FINAL champion, submission of record]** 6-way ensemble (exp056/effb3/effv2s/swin_lr2e4/pvt_v2_b0/swin_small) with weights + causal smoothing both re-fit via `g_eda/exp011/nested_blend.py`'s outer-cross-fit for this exact member set. Beats v2 by -0.00145, v1 by -0.00263. Honest nested OOF improved -0.00395 vs v1 (0.58813 -> 0.58418), ~67% OOF-to-LB transfer. pvt_v2_b0 (a solo tie with effb3) got the largest blend weight (0.2487) -- confirms architectural diversity adds ensemble value even without a solo win. The 11-way follow-up attempt (above) regressed, so this remains the best confirmed submission at deadline |
 | -1.5 | exp065_champion_ensemble_v2_causal | `exp065_champion_ensemble_v2_causal.zip` | 0.6684780268241325 | 2026/07/30 23:08:29 | valid | **[ELIGIBLE — superseded by 6-way]** same 4-way ensemble as v1, only the post-processing (causal smoothing tap weights, blur sigma, per-satellite thresholds) re-tuned. Beats v1 by -0.00118 -- a low-degree-of-freedom change, transferred cleanly OOF-to-LB as usual for this category of change |
 | -1 | exp065_champion_ensemble_causal | `exp065_champion_ensemble_causal.zip` | 0.6696622672831182 | 2026/07/30 16:03:44 | valid | **[ELIGIBLE — superseded by v2]** architecture-diverse 4-way ensemble (exp056/effb3/effv2s/swin_lr2e4) weighted by `g_eda/exp011/nested_blend.py`'s outer-cross-fit fit (effb3=0.315, swin_lr2e4=0.315, exp056=0.27, effv2s=0.10) + causal-only smoothing. Nested OOF -0.01191 vs best solo, overfitting_gap -0.00049 (honest), submission_gate.py GO. Beats exp064_effb3 by -0.00235 |
 | -0.5 | exp064_swin_lr2e4 | `exp064_swin_lr2e4_submission.zip` | 0.6704384663890527 | 2026/07/30 16:04:15 | valid | **[ELIGIBLE — 2nd best solo]** pretrained Swin-Tiny (transformer) backbone, lr=2e-4, 5-fold. This was the one exp064 arm with a CLEAN fold0/4 gate PASS (not mixed/tie) -- and it also delivered on LB, beating exp064_effb3 by -0.00157. Refines this session's gate-reliability finding: clean passes remain trustworthy signal, the failure mode was specifically dismissing mixed/tie verdicts |
@@ -395,6 +463,11 @@ The complete chronological history is in `Submission Log` below.
 | 2026/07/31 08:31:17 | exp064_convnext_small_lr2e4 | `exp064_convnext_small_lr2e4_submission.zip` | 0.6793384249392268 | holyholyholy | valid | 単体pretrained ConvNeXt-Small、lr=2e-4、5-fold。提出時点でexp064系全体最下位 |
 | 2026/08/02 09:47:01 | exp064_convnext_lr2e4 | `exp064_convnext_lr2e4_submission.zip` | 0.6837550386507026 | holyholyholy | valid | 単体pretrained ConvNeXt-Tiny、lr=2e-4、5-fold。2026-07-27にfold0/4「タイ」のまま放置されていたのを発掘。OOF(0.60442)はeffv2s相当で期待したが実測はconvnext_small比**+0.00402悪化**でexp064系新最下位。EfficientNet/Swinで一貫していた「小さい方が勝つ」パターンの初の反例 — ConvNeXtはサイズ非依存で弱いと確定、軸クローズ |
 | 2026/08/03 06:43:36 | exp064_effb3_seed_ens_42_456 | `exp064_effb3_seed_ens_42_456_submission.zip` | 0.6713977780148311 | holyholyholy | valid | effb3のseed42+456等重み平均。seed42単体比**-0.00061**、seed456単体比**-0.00447**で**両メンバーを上回る**。exp056の2-seedアンサンブル成功パターンがpretrained backbone系統でも再現 |
+| 2026/08/04 07:46:06 | exp065_champion_ensemble_11way_causal | `exp065_champion_ensemble_11way_causal.zip` | 0.6680565782544989 | holyholyholy | valid | 6-way + convnext_lr2e4/effb1/effb2/regnety016/densenet121の11-way。honest nested OOFは-0.00152改善を予測したが実測は6-way比**+0.00102悪化**。締切直前の提出で反応する時間なし |
+| 2026/08/04 07:46:25 | exp064_effb2 | `exp064_effb2_submission.zip` | 0.6741342779317125 | holyholyholy | valid | 単体pretrained EfficientNet-B2。fold0/4ゲート・5-fold OOFともにeffb3自身を上回っていたが実測LBはeffb3比**+0.00212悪化** — 「小さい方が勝つ」パターンはB2では継続しなかった |
+| 2026/08/04 07:46:50 | exp064_effb1 | `exp064_effb1_submission.zip` | 0.6751330823662545 | holyholyholy | valid | 単体pretrained EfficientNet-B1。effb3比+0.00312悪化。同上 |
+| 2026/08/04 07:47:46 | exp064_regnety016 | `exp064_regnety016_submission.zip` | 0.6766230833995243 | holyholyholy | valid | 単体pretrained RegNetY-016(新backbone系統)。effb3比+0.00461悪化 |
+| 2026/08/04 07:48:31 | exp064_densenet121 | `exp064_densenet121_submission.zip` | 0.6838780321092115 | holyholyholy | valid | 単体pretrained DenseNet-121(新backbone系統)。effb3比+0.01187悪化、convnext_lr2e4に近い悪さ |
 | 2026/08/01 11:49:04 | exp064_pvt_v2_b0_lr2e4 | `exp064_pvt_v2_b0_lr2e4_submission.zip` | 0.672541575619076 | holyholyholy | valid | 単体pretrained PVTv2-B0(新backbone系統)、5-fold。5-fold OOFは今セッション単体最良(0.59617、effb3の0.59758を上回る)だったが、実測LBはexp064_effb3比 **+0.00053とノイズ帯内の実質タイ** — 0.001台のOOF差はLB順位を予測しないことが判明 |
 | 2026/08/01 11:49:30 | exp064_effb3_seed456 | `exp064_effb3_seed456_submission.zip` | 0.6758692035492916 | holyholyholy | valid | effb3のseed456版。OOFはseed42比+0.00932悪化していたが、実測LB悪化はexp064_effb3比**+0.00386**(OOF差の約41%のみ転移)。exp056で確認済みのseedノイズがpretrained backbone系統でも再現。単体では使えないが、seed42+456の2シードアンサンブルが次候補 |
 | 2026/08/01 11:53:18 | exp064_swin_small_lr2e4 | `exp064_swin_small_lr2e4_submission.zip` | (error) | holyholyholy | error | プラットフォーム側のinternal server errorで未採点(1回目)。再提出して確定 → 下記12:05:44の行を参照 |

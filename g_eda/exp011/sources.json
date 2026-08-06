@@ -80,8 +80,44 @@
       "checkpoint_dir": "exp064_convnext_lr2e4",
       "eval_pred_dir": "outputs/submissions/exp064_convnext_lr2e4/test_files",
       "oof_cache": "outputs/g_eda/exp011/exp064_convnext_lr2e4_oof_pred.npz",
+      "public_rmse_solo": 0.6837550386507026,
+      "notes": "2026-08-01 addition: timm convnext_tiny. Solo LB 0.6837550386507026 (2026-08-02) -- worst of the exp064 family, broke the 'smaller wins within family' pattern (worse than convnext_small). Blend contribution tested negligible (+7-way nested score only -0.00005 vs 6-way, avg weight 0.058) -- kept in manifest for completeness but not expected to move the blend."
+    },
+    {
+      "name": "exp064_effb1",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_effb1",
+      "eval_pred_dir": "outputs/submissions/exp064_effb1/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_effb1_oof_pred.npz",
       "public_rmse_solo": null,
-      "notes": "2026-08-01 addition: timm convnext_tiny (modern CNN family, distinct from EfficientNet/Swin/PVTv2 -- none of the other 6 manifest members use a ConvNeXt-style encoder), lr=2e-4. Trained 2026-07-27 but never scored past a fold0/4 'tie' verdict against the champion baseline until this 2026-08-01 audit revived it; full 5-fold OOF is 0.60442 (comparable to effv2s' 0.60443). No solo LB yet -- included here to test blend-diversity value ahead of a possible solo submission."
+      "notes": "2026-08-03 addition: timm efficientnet_b1, one size down from champion effb3, extending the 'smaller wins within EfficientNet' pattern (b3<b4) further down. 5-fold OOF 0.59934. Same encoder family as effb3/effv2s -- lower diversity value, included mainly as a possible solo/seed-style upgrade. No solo LB yet."
+    },
+    {
+      "name": "exp064_effb2",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_effb2",
+      "eval_pred_dir": "outputs/submissions/exp064_effb2/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_effb2_oof_pred.npz",
+      "public_rmse_solo": null,
+      "notes": "2026-08-03 addition: timm efficientnet_b2. 5-fold OOF 0.59693 -- BEATS exp064_effb3's own OOF (0.59758), 2nd-best OOF of any solo model tested this session (behind pvt_v2_b0's 0.59617). Strongest candidate to extend the EfficientNet capacity-down pattern into a real solo win. No solo LB yet -- same family as effb3/effv2s so lower ensembling-diversity value, but worth testing as a straight effb3 replacement."
+    },
+    {
+      "name": "exp064_regnety016",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_regnety016",
+      "eval_pred_dir": "outputs/submissions/exp064_regnety016/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_regnety016_oof_pred.npz",
+      "public_rmse_solo": null,
+      "notes": "2026-08-03 addition: timm regnety_016 (RegNet-Y, new CNN family distinct from all 9 existing manifest members). 5-fold OOF 0.60025. fold0/4 gate was mixed (best fold0 of any candidate, -0.00808 vs effb3, but fold4 +0.00632 worse) -- same 'mixed' shape that historically underestimated effb3/effv2s. No solo LB yet; genuinely new architecture family so blend-diversity value is the primary interest regardless of solo outcome."
+    },
+    {
+      "name": "exp064_densenet121",
+      "module_dir": "exp064",
+      "checkpoint_dir": "exp064_densenet121",
+      "eval_pred_dir": "outputs/submissions/exp064_densenet121/test_files",
+      "oof_cache": "outputs/g_eda/exp011/exp064_densenet121_oof_pred.npz",
+      "public_rmse_solo": null,
+      "notes": "2026-08-03 addition: timm densenet121 (DenseNet, new CNN family distinct from all 9 existing manifest members). 5-fold OOF 0.59990. fold0/4 gate was mixed (best fold0 of ALL candidates tested, -0.01007 vs effb3, but fold4 +0.00846 worse). No solo LB yet; genuinely new architecture family so blend-diversity value is the primary interest regardless of solo outcome."
     }
   ]
 }
